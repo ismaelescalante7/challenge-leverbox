@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->enum('name', ['DEV', 'QA', 'HR']);
             $table->timestamps();
+            
+            // Index for better performance
+            $table->index('name');
         });
     }
 

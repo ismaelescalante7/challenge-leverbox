@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->enum('name', ['LOW', 'MEDIUM', 'HIGH']);
             $table->timestamps();
+
+            // Index for better performance
+            $table->index('name');
         });
     }
 

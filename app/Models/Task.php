@@ -1,13 +1,17 @@
 <?php
+// app/Models/Task.php (Laravel 12)
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Carbon\Carbon;
 
+#[ObservedBy([\App\Observers\TaskObserver::class])]
 class Task extends Model
 {
     use HasFactory;
@@ -24,12 +28,15 @@ class Task extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Get the attributes that should be cast.
      */
-    protected $casts = [
-        'due_date' => 'date',
-        'status' => 'string',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'due_date' => 'date',
+            'status' => 'string',
+        ];
+    }
 
     /**
      * The relationships that should always be loaded.
@@ -104,7 +111,7 @@ class Task extends Model
     }
 
     /**
-     * Scope to get pending tasks.
+     * Scope for pending tasks.
      */
     public function scopePending($query)
     {
@@ -112,7 +119,7 @@ class Task extends Model
     }
 
     /**
-     * Scope to get in progress tasks.
+     * Scope for in progress tasks.
      */
     public function scopeInProgress($query)
     {
@@ -120,7 +127,7 @@ class Task extends Model
     }
 
     /**
-     * Scope to get completed tasks.
+     * Scope for completed tasks.
      */
     public function scopeCompleted($query)
     {
@@ -130,62 +137,72 @@ class Task extends Model
     /**
      * Check if the task is overdue.
      */
-    public function getIsOverdueAttribute(): bool
+    protected function isOverdue(): Attribute
     {
-        if (!$this->due_date) {
-            return false;
-        }
-        
-        return $this->due_date->isPast() && $this->status !== 'completed';
+        return Attribute::make(
+            get: function (): bool {
+                if (!$this->due_date) {
+                    return false;
+                }
+                
+                return $this->due_date->isPast() && $this->status !== 'completed';
+            }
+        );
     }
 
     /**
      * Get status label for display.
      */
-    public function getStatusLabelAttribute(): string
+    protected function statusLabel(): Attribute
     {
-        return match($this->status) {
-            'pending' => 'Pendiente',
-            'in_progress' => 'En Progreso',
-            'completed' => 'Completada',
-            default => $this->status,
-        };
+        return Attribute::make(
+            get: fn(): string => match($this->status) {
+                'pending' => 'Pendiente',
+                'in_progress' => 'En Progreso',
+                'completed' => 'Completada',
+                default => $this->status,
+            }
+        );
     }
 
     /**
      * Get status color for UI.
      */
-    public function getStatusColorAttribute(): string
+    protected function statusColor(): Attribute
     {
-        return match($this->status) {
-            'pending' => '#6B7280',      // gray
-            'in_progress' => '#F59E0B',  // amber
-            'completed' => '#10B981',    // green
-            default => '#6B7280',        // gray
-        };
+        return Attribute::make(
+            get: fn(): string => match($this->status) {
+                'pending' => '#6B7280',      // gray
+                'in_progress' => '#F59E0B',  // amber
+                'completed' => '#10B981',    // green
+                default => '#6B7280',        // gray
+            }
+        );
     }
 
     /**
      * Get days until due date.
      */
-    public function getDaysUntilDueAttribute(): ?int
+    protected function daysUntilDue(): Attribute
     {
-        if (!$this->due_date) {
-            return null;
-        }
+        return Attribute::make(
+            get: function (): ?int {
+                if (!$this->due_date) {
+                    return null;
+                }
 
-        return Carbon::today()->diffInDays($this->due_date, false);
+                return Carbon::today()->diffInDays($this->due_date, false);
+            }
+        );
     }
 
     /**
      * Get formatted due date.
      */
-    public function getFormattedDueDateAttribute(): ?string
+    protected function formattedDueDate(): Attribute
     {
-        if (!$this->due_date) {
-            return null;
-        }
-
-        return $this->due_date->format('d/m/Y');
+        return Attribute::make(
+            get: fn(): ?string => $this->due_date?->format('d/m/Y')
+        );
     }
 }
