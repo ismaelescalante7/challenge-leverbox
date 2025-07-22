@@ -1,23 +1,43 @@
-import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import { fileURLToPath, URL } from 'node:url'
 
-// https://vite.dev/config/
 export default defineConfig({
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    allowedHosts: ['0.0.0.0', 'localhost', 'your-app.test'],
-  },
-  plugins: [
-    vue(),
-    vueDevTools(),
-  ],
+  plugins: [vue()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
   },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    cors: true,
+    hmr: {
+      host: 'localhost',
+      port: 5173
+    },
+    watch: {
+      usePolling: true
+    }
+  },
+  build: {
+    target: 'esnext',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          ui: ['@headlessui/vue', '@heroicons/vue']
+        }
+      }
+    }
+  },
+  define: {
+    __VUE_PROD_DEVTOOLS__: false,
+    __VUE_OPTIONS_API__: true
+  },
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'axios']
+  }
 })
