@@ -204,6 +204,7 @@ const initializeApp = async (): Promise<void> => {
 
 // Lifecycle
 onMounted(async () => {
+  console.log('starting')
   await initializeApp()
   
   // Set up health check interval (every 30 seconds)

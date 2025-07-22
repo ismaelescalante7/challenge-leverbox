@@ -61,9 +61,8 @@ export const useTasksStore = defineStore('tasks', () => {
     try {
       await Promise.all([
         fetchTasks(),
-        fetchStatistics(),
-        fetchPriorities(),
-        fetchTags()
+        //fetchPriorities(),
+        //fetchTags()
       ])
       isInitialized.value = true
     } catch (err) {
@@ -74,10 +73,11 @@ export const useTasksStore = defineStore('tasks', () => {
   async function fetchTasks(page: number = pagination.value.current_page): Promise<void> {
     loading.value = true
     error.value = null
-
+    console.log('entree')
     try {
       const params = { ...filters.value, page, per_page: pagination.value.per_page }
       const response = await taskService.getTasks(params)
+      console.log(response)
       tasks.value = response.data
       pagination.value = {
         current_page: response.current_page,
@@ -117,7 +117,6 @@ export const useTasksStore = defineStore('tasks', () => {
     try {
       const newTask = await taskService.createTask(taskData)
       tasks.value.unshift(newTask)
-      await fetchStatistics()
       return newTask
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to create task'
@@ -136,7 +135,6 @@ export const useTasksStore = defineStore('tasks', () => {
       const index = tasks.value.findIndex(task => task.id === id)
       if (index !== -1) tasks.value[index] = updatedTask
       if (currentTask.value?.id === id) currentTask.value = updatedTask
-      await fetchStatistics()
       return updatedTask
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to update task'
@@ -155,7 +153,6 @@ export const useTasksStore = defineStore('tasks', () => {
       const index = tasks.value.findIndex(task => task.id === id)
       if (index !== -1) tasks.value[index] = updatedTask
       if (currentTask.value?.id === id) currentTask.value = updatedTask
-      await fetchStatistics()
       return updatedTask
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to update task status'
@@ -174,7 +171,6 @@ export const useTasksStore = defineStore('tasks', () => {
       tasks.value = tasks.value.filter(task => task.id !== id)
       if (currentTask.value?.id === id) currentTask.value = null
       selectedTasks.value = selectedTasks.value.filter(taskId => taskId !== id)
-      await fetchStatistics()
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to delete task'
       throw err
@@ -191,7 +187,6 @@ export const useTasksStore = defineStore('tasks', () => {
       await taskService.bulkUpdateTasks({ task_ids: taskIds, ...updateData })
       await fetchTasks(pagination.value.current_page)
       selectedTasks.value = []
-      await fetchStatistics()
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to update tasks'
       throw err
@@ -208,7 +203,6 @@ export const useTasksStore = defineStore('tasks', () => {
       await taskService.bulkDeleteTasks({ task_ids: taskIds })
       tasks.value = tasks.value.filter(task => !taskIds.includes(task.id))
       selectedTasks.value = []
-      await fetchStatistics()
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to delete tasks'
       throw err
@@ -236,14 +230,6 @@ export const useTasksStore = defineStore('tasks', () => {
       error.value = err.response?.data?.message || 'Failed to search tasks'
     } finally {
       loading.value = false
-    }
-  }
-
-  async function fetchStatistics(): Promise<void> {
-    try {
-      statistics.value = await taskService.getStatistics()
-    } catch (err) {
-      console.error('Error fetching statistics:', err)
     }
   }
 
@@ -340,7 +326,6 @@ export const useTasksStore = defineStore('tasks', () => {
     bulkUpdateTasks,
     bulkDeleteTasks,
     searchTasks,
-    fetchStatistics,
     fetchPriorities,
     fetchTags,
     updateFilters,
