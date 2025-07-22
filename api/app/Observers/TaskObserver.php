@@ -28,7 +28,6 @@ class TaskObserver
             'status' => $task->status
         ]);
         
-        $this->clearCache();
     }
 
     /**
@@ -52,7 +51,6 @@ class TaskObserver
             ]);
         }
         
-        $this->clearCache();
     }
 
     /**
@@ -65,7 +63,6 @@ class TaskObserver
             'title' => $task->title
         ]);
         
-        $this->clearCache();
     }
 
     /**
@@ -74,7 +71,6 @@ class TaskObserver
     public function restored(Task $task): void
     {
         Log::info('Task restored', ['id' => $task->id]);
-        $this->clearCache();
     }
 
     /**
@@ -83,15 +79,6 @@ class TaskObserver
     public function forceDeleted(Task $task): void
     {
         Log::info('Task force deleted', ['id' => $task->id]);
-        $this->clearCache();
     }
 
-    /**
-     * Clear relevant cache entries.
-     */
-    protected function clearCache(): void
-    {
-        Cache::forget('task_statistics');
-        Cache::tags(['tasks'])->flush();
-    }
 }
