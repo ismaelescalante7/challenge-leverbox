@@ -293,14 +293,14 @@
               </td>
 
               <td class="table-cell">
-                <div v-if="task.due_date">
-                  <div :class="getDateStatusClasses(task.due_date)">
-                    {{ formatDate(task.due_date) }}
+                <div v-if="task.dates">
+                  <div :class="getDateStatusClasses(task.dates.due_date)">
+                    {{ formatDate(task.dates.due_date) }}
                   </div>
                   <div class="text-xs text-gray-500 mt-1">
-                    {{ getRelativeDate(task.due_date) }}
+                    {{ getRelativeDate(task.dates.due_date) }}
                   </div>
-                  <div v-if="task.is_overdue" class="text-xs text-red-600 font-medium">
+                  <div v-if="task.dates.is_overdue" class="text-xs text-red-600 font-medium">
                     Overdue
                   </div>
                 </div>
@@ -309,10 +309,10 @@
 
               <td class="table-cell">
                 <div class="text-sm text-gray-900">
-                  {{ formatDate(task.created_at) }}
+                  {{ formatDate(task.dates.created_at) }}
                 </div>
                 <div class="text-xs text-gray-500">
-                  {{ getTimeAgo(task.created_at) }}
+                  {{ getTimeAgo(task.dates.created_at) }}
                 </div>
               </td>
 
