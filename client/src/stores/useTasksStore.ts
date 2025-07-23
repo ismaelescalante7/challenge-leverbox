@@ -1,310 +1,230 @@
 import { defineStore } from 'pinia'
-import { ref, computed, type Ref } from 'vue'
-import { taskService } from '@/services/taskService'
-import type {
-  Task,
-  CreateTaskDto,
-  UpdateTaskDto,
-  TaskFilters,
-  Priority,
-  Tag,
-  TaskStatus,
+import { ref, computed } from 'vue'
+import { taskService, taskHelpers } from '@/services/taskService'
+import type { 
+  Task, 
+  CreateTaskDto, 
+  UpdateTaskDto, 
+  TaskFilters, 
+  Priority, 
+  Tag, 
+  TasksApiResponse,
+  PaginationInfo,
+  AvailableFilters
 } from '@/types/task'
 
 export const useTasksStore = defineStore('tasks', () => {
-  // ==========================================
-  // STATE
-  // ==========================================
-  const tasks: Ref<Task[]> = ref([])
-  const currentTask: Ref<Task | null> = ref(null)
-  const loading: Ref<boolean> = ref(false)
-  const error: Ref<string | null> = ref(null)
-
-  const priorities: Ref<Priority[]> = ref([])
-  const tags: Ref<Tag[]> = ref([])
-
-  const selectedTasks: Ref<number[]> = ref([])
-  const isInitialized = ref(false)
-
-  const pagination = ref({
+  // State
+  const tasks = ref<Task[]>([])
+  const currentTask = ref<Task | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  const priorities = ref<Priority[]>([])
+  const tags = ref<Tag[]>([])
+  
+  // Pagination actualizada
+  const pagination = ref<PaginationInfo>({
     current_page: 1,
+    from: 1,
+    last_page: 1,
     per_page: 10,
+    to: 0,
     total: 0,
-    last_page: 1
+    has_more_pages: false
   })
-
-  const filters: Ref<TaskFilters> = ref({
+  
+  // Filtros disponibles del API
+  const availableFilters = ref<AvailableFilters | null>(null)
+  
+  // Filtros actuales
+  const filters = ref<TaskFilters>({
     status: '',
     priority_id: '',
-    tag_ids: [],
     search: '',
-    overdue: false,
+    page: 1,
+    per_page: 10,
     sort_by: 'created_at',
     sort_direction: 'desc',
-    page: 1,
-    per_page: 10
+    overdue: false,
+    tag_ids: []
   })
 
-  // ==========================================
-  // GETTERS
-  // ==========================================
+  // Computed usando helpers
   const tasksByStatus = computed(() => ({
-    pending: tasks.value.filter(task => task.status === 'pending'),
-    in_progress: tasks.value.filter(task => task.status === 'in_progress'),
-    completed: tasks.value.filter(task => task.status === 'completed')
+    pending: tasks.value.filter(task => taskHelpers.getStatusValue(task) === 'pending'),
+    in_progress: tasks.value.filter(task => taskHelpers.getStatusValue(task) === 'in_progress'),
+    completed: tasks.value.filter(task => taskHelpers.getStatusValue(task) === 'completed')
   }))
 
-  // ==========================================
-  // ACTIONS
-  // ==========================================
-  async function initialize(): Promise<void> {
+  const overdueTasks = computed(() => 
+    tasks.value.filter(task => taskHelpers.isOverdue(task))
+  )
+
+  const editableTasks = computed(() => 
+    tasks.value.filter(task => taskHelpers.canEdit(task))
+  )
+
+  const taskStats = computed(() => ({
+    total: tasks.value.length,
+    pending: tasksByStatus.value.pending.length,
+    in_progress: tasksByStatus.value.in_progress.length,
+    completed: tasksByStatus.value.completed.length,
+    overdue: overdueTasks.value.length
+  }))
+
+  // Actions
+  const fetchTasks = async (page?: number): Promise<void> => {
+    console.log('📥 Store: Fetching tasks...')
+    loading.value = true
+    error.value = null
+    
     try {
-      await Promise.all([
-        fetchTasks(),
-        //fetchPriorities(),
-        //fetchTags()
-      ])
-      isInitialized.value = true
-    } catch (err) {
-      console.error('Failed to initialize tasks store:', err)
+      // Crear filtros limpios
+      const cleanFilters: Record<string, any> = {
+        page: page || filters.value.page || 1,
+        per_page: filters.value.per_page || 10,
+        sort_by: filters.value.sort_by || 'created_at',
+        sort_direction: filters.value.sort_direction || 'desc'
+      }
+      
+      // Solo agregar filtros que tienen valor
+      if (filters.value.status && filters.value.status !== '') {
+        cleanFilters.status = filters.value.status
+      }
+      
+      if (filters.value.search && filters.value.search !== '') {
+        cleanFilters.search = filters.value.search
+      }
+      
+      if (filters.value.priority_id && filters.value.priority_id !== '') {
+        cleanFilters.priority_id = filters.value.priority_id
+      }
+      
+      if (typeof filters.value.overdue === 'boolean') {
+        cleanFilters.overdue = filters.value.overdue
+      }
+      
+      if (Array.isArray(filters.value.tag_ids) && filters.value.tag_ids.length > 0) {
+        cleanFilters.tag_ids = [...filters.value.tag_ids]
+      }
+      
+      console.log('📤 Store sending filters:', cleanFilters)
+      
+      const response: TasksApiResponse = await taskService.getTasks(cleanFilters)
+      
+      // Actualizar state con nueva estructura
+      tasks.value = response.data
+      pagination.value = response.pagination
+      availableFilters.value = response.filters
+      
+      console.log('📋 Tasks loaded:', tasks.value.length)
+      console.log('📊 Sample task structure:', tasks.value[0])
+      
+    } catch (err: any) {
+      error.value = err.message || 'Failed to fetch tasks'
+      console.error('💥 Store fetch error:', err)
+    } finally {
+      loading.value = false
     }
   }
 
-  async function fetchTasks(page: number = pagination.value.current_page): Promise<void> {
+  const fetchTask = async (id: number): Promise<void> => {
     loading.value = true
     error.value = null
-    console.log('entree')
+    
     try {
-      const params = { ...filters.value, page, per_page: pagination.value.per_page }
-      const response = await taskService.getTasks(params)
-      console.log(response)
-      tasks.value = response.data
-      pagination.value = {
-        current_page: response.current_page,
-        per_page: response.per_page,
-        total: response.total,
-        last_page: response.last_page
+      currentTask.value = await taskService.getTask(id)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to fetch task'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const createTask = async (data: CreateTaskDto): Promise<void> => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const newTask = await taskService.createTask(data)
+      tasks.value.unshift(newTask)
+    } catch (err: any) {
+      error.value = err.message || 'Failed to create task'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateTask = async (id: number, data: UpdateTaskDto): Promise<void> => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const updatedTask = await taskService.updateTask(id, data)
+      const index = tasks.value.findIndex(t => t.id === id)
+      if (index !== -1) {
+        tasks.value[index] = updatedTask
+      }
+      if (currentTask.value?.id === id) {
+        currentTask.value = updatedTask
       }
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch tasks'
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function fetchTask(id: number): Promise<Task | null> {
-    loading.value = true
-    error.value = null
-
-    try {
-      const task = await taskService.getTask(id)
-      currentTask.value = task
-      const index = tasks.value.findIndex(t => t.id === id)
-      if (index !== -1) tasks.value[index] = task
-      return task
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch task'
-      return null
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function createTask(taskData: CreateTaskDto): Promise<Task | null> {
-    loading.value = true
-    error.value = null
-
-    try {
-      const newTask = await taskService.createTask(taskData)
-      tasks.value.unshift(newTask)
-      return newTask
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to create task'
+      error.value = err.message || 'Failed to update task'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  async function updateTask(id: number, taskData: UpdateTaskDto): Promise<Task | null> {
+  const deleteTask = async (id: number): Promise<void> => {
     loading.value = true
     error.value = null
-
-    try {
-      const updatedTask = await taskService.updateTask(id, taskData)
-      const index = tasks.value.findIndex(task => task.id === id)
-      if (index !== -1) tasks.value[index] = updatedTask
-      if (currentTask.value?.id === id) currentTask.value = updatedTask
-      return updatedTask
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update task'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function updateTaskStatus(id: number, status: TaskStatus): Promise<Task | null> {
-    loading.value = true
-    error.value = null
-
-    try {
-      const updatedTask = await taskService.updateTaskStatus(id, status)
-      const index = tasks.value.findIndex(task => task.id === id)
-      if (index !== -1) tasks.value[index] = updatedTask
-      if (currentTask.value?.id === id) currentTask.value = updatedTask
-      return updatedTask
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update task status'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function deleteTask(id: number): Promise<void> {
-    loading.value = true
-    error.value = null
-
+    
     try {
       await taskService.deleteTask(id)
-      tasks.value = tasks.value.filter(task => task.id !== id)
-      if (currentTask.value?.id === id) currentTask.value = null
-      selectedTasks.value = selectedTasks.value.filter(taskId => taskId !== id)
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to delete task'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function bulkUpdateTasks(taskIds: number[], updateData: Partial<UpdateTaskDto>): Promise<void> {
-    loading.value = true
-    error.value = null
-
-    try {
-      await taskService.bulkUpdateTasks({ task_ids: taskIds, ...updateData })
-      await fetchTasks(pagination.value.current_page)
-      selectedTasks.value = []
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update tasks'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function bulkDeleteTasks(taskIds: number[]): Promise<void> {
-    loading.value = true
-    error.value = null
-
-    try {
-      await taskService.bulkDeleteTasks({ task_ids: taskIds })
-      tasks.value = tasks.value.filter(task => !taskIds.includes(task.id))
-      selectedTasks.value = []
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to delete tasks'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function searchTasks(query: string): Promise<void> {
-    if (!query.trim()) return fetchTasks(1)
-
-    loading.value = true
-    error.value = null
-
-    try {
-      const searchResults = await taskService.searchTasks({ q: query })
-      tasks.value = searchResults
-      pagination.value = {
-        current_page: 1,
-        per_page: searchResults.length,
-        total: searchResults.length,
-        last_page: 1
+      tasks.value = tasks.value.filter(t => t.id !== id)
+      if (currentTask.value?.id === id) {
+        currentTask.value = null
       }
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to search tasks'
+      error.value = err.message || 'Failed to delete task'
+      throw err
     } finally {
       loading.value = false
     }
   }
 
-  async function fetchPriorities(): Promise<void> {
-    try {
-      priorities.value = await taskService.getPriorities()
-    } catch (err) {
-      console.error('Error fetching priorities:', err)
-    }
+  const updateFilters = (newFilters: Partial<TaskFilters>): void => {
+    Object.assign(filters.value, newFilters)
+    fetchTasks()
   }
 
-  async function fetchTags(): Promise<void> {
-    try {
-      tags.value = await taskService.getTags()
-    } catch (err) {
-      console.error('Error fetching tags:', err)
-    }
-  }
-
-  function updateFilters(newFilters: Partial<TaskFilters>): void {
-    filters.value = { ...filters.value, ...newFilters }
-    fetchTasks(1)
-  }
-
-  function clearFilters(): void {
+  const clearFilters = (): void => {
     filters.value = {
       status: '',
       priority_id: '',
-      tag_ids: [],
       search: '',
-      overdue: false,
+      page: 1,
+      per_page: 10,
       sort_by: 'created_at',
       sort_direction: 'desc',
-      page: 1,
-      per_page: 10
+      overdue: false,
+      tag_ids: []
     }
-    fetchTasks(1)
+    fetchTasks()
   }
 
-  function toggleTaskSelection(taskId: number): void {
-    const index = selectedTasks.value.indexOf(taskId)
-    index > -1
-      ? selectedTasks.value.splice(index, 1)
-      : selectedTasks.value.push(taskId)
-  }
-
-  function selectAllTasks(): void {
-    selectedTasks.value = tasks.value.map(task => task.id)
-  }
-
-  function clearSelection(): void {
-    selectedTasks.value = []
-  }
-
-  function clearError(): void {
+  const clearError = (): void => {
     error.value = null
   }
 
-  function $reset(): void {
-    tasks.value = []
-    currentTask.value = null
-    loading.value = false
-    error.value = null
-    selectedTasks.value = []
-    isInitialized.value = false
-    pagination.value = {
-      current_page: 1,
-      per_page: 10,
-      total: 0,
-      last_page: 1
-    }
-    clearFilters()
+  const initialize = async (): Promise<void> => {
+    await fetchTasks()
   }
 
   return {
+    // State
     tasks,
     currentTask,
     loading,
@@ -313,27 +233,23 @@ export const useTasksStore = defineStore('tasks', () => {
     tags,
     pagination,
     filters,
-    selectedTasks,
-    isInitialized,
+    availableFilters,
+    
+    // Computed
     tasksByStatus,
-    initialize,
+    overdueTasks,
+    editableTasks,
+    taskStats,
+    
+    // Actions
     fetchTasks,
     fetchTask,
     createTask,
     updateTask,
-    updateTaskStatus,
     deleteTask,
-    bulkUpdateTasks,
-    bulkDeleteTasks,
-    searchTasks,
-    fetchPriorities,
-    fetchTags,
     updateFilters,
     clearFilters,
-    toggleTaskSelection,
-    selectAllTasks,
-    clearSelection,
     clearError,
-    $reset
+    initialize
   }
 })

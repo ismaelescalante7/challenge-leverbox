@@ -152,11 +152,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useTasksStore } from '@/stores/useTasksStore'
-import { taskService } from '@/services/taskService'
-import { useNotifications } from '@/composables/useNotifications'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useTasksStore } from '@/stores/useTasksStore';
+import { taskService } from '@/services/taskService';
+import { useNotifications } from '@/composables/useNotifications';
 
 // Composables
 const router = useRouter()
@@ -204,7 +204,6 @@ const initializeApp = async (): Promise<void> => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('starting')
   await initializeApp()
   
   // Set up health check interval (every 30 seconds)

@@ -7,6 +7,7 @@ import type {
   TaskFilters,
   Priority,
   Tag,
+  TasksApiResponse,
   PaginatedResponse
 } from '@/types/task'
 
@@ -46,7 +47,11 @@ class TaskService {
     this.api.interceptors.response.use(
       (response) => {
         console.log(`✅ ${response.status} ${response.config.url}`)
-        console.log('📦 Response:', response.data)
+        console.log('📦 Response data structure:', {
+          hasData: !!response.data.data,
+          hasPagination: !!response.data.pagination,
+          dataLength: response.data.data?.length || 0
+        })
         return response
       },
       (error) => {
@@ -57,9 +62,9 @@ class TaskService {
   }
 
   /**
-   * SOLUCIÓN DEFINITIVA: Serializar parámetros de forma súper segura
+   * Serializar parámetros de forma segura
    */
-  private ultraSafeParams(params: any): Record<string, string | number | boolean> {
+  private safeParams(params: any): Record<string, string | number | boolean> {
     const result: Record<string, string | number | boolean> = {}
     
     if (!params || typeof params !== 'object') {
@@ -67,19 +72,15 @@ class TaskService {
     }
 
     try {
-      // Convertir a JSON y volver a parsear para eliminar proxies/referencias
       const jsonString = JSON.stringify(params, (key, value) => {
-        // Eliminar funciones, símbolos, undefined
         if (typeof value === 'function' || typeof value === 'symbol' || value === undefined) {
           return undefined
         }
         
-        // Convertir arrays a strings simples
         if (Array.isArray(value)) {
           return value.length > 0 ? value.join(',') : undefined
         }
         
-        // Convertir objetos complejos a valores primitivos
         if (value && typeof value === 'object' && value.constructor === Object) {
           return value.id || value.value || String(value)
         }
@@ -89,7 +90,6 @@ class TaskService {
       
       const parsed = JSON.parse(jsonString)
       
-      // Solo incluir valores válidos
       for (const [key, value] of Object.entries(parsed)) {
         if (value !== null && value !== undefined && value !== '') {
           if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
@@ -98,7 +98,7 @@ class TaskService {
         }
       }
       
-      console.log('🛡️ Ultra-safe params:', result)
+      console.log('🛡️ Safe params:', result)
       return result
       
     } catch (error) {
@@ -107,76 +107,116 @@ class TaskService {
     }
   }
 
-  async getTasks(filters: TaskFilters = {}): Promise<PaginatedResponse<Task>> {
+  /**
+   * Obtener tareas con la nueva estructura de respuesta
+   */
+  async getTasks(filters: TaskFilters = {}): Promise<TasksApiResponse> {
     try {
-      const safeParams = this.ultraSafeParams(filters)
+      const safeParams = this.safeParams(filters)
       
-      const response: AxiosResponse = await this.api.get('/tasks', { 
+      const response: AxiosResponse<TasksApiResponse> = await this.api.get('/tasks', { 
         params: safeParams 
       })
       
-      const data = response.data
+      console.log('📋 Tasks received:', response.data.data.length)
+      return response.data
       
-      if (data.data && Array.isArray(data.data)) {
-        return data
-      } else if (Array.isArray(data)) {
-        return {
-          data,
-          current_page: 1,
-          from: 1,
-          last_page: 1,
-          per_page: data.length,
-          to: data.length,
-          total: data.length
-        }
-      }
-      
-      return data
     } catch (error) {
       console.error('💥 getTasks failed:', error)
       throw error
     }
   }
 
+  /**
+   * Obtener una tarea específica
+   */
   async getTask(id: number): Promise<Task> {
-    const response: AxiosResponse = await this.api.get(`/tasks/${id}`)
-    return response.data.data || response.data
+    try {
+      const response: AxiosResponse = await this.api.get(`/tasks/${id}`)
+      return response.data.data || response.data
+    } catch (error) {
+      console.error('💥 getTask failed:', error)
+      throw error
+    }
   }
 
+  /**
+   * Crear nueva tarea
+   */
   async createTask(data: CreateTaskDto): Promise<Task> {
-    const safeData = this.ultraSafeParams(data)
-    const response: AxiosResponse = await this.api.post('/tasks', safeData)
-    return response.data.data || response.data
+    try {
+      const safeData = this.safeParams(data)
+      const response: AxiosResponse = await this.api.post('/tasks', safeData)
+      return response.data.data || response.data
+    } catch (error) {
+      console.error('💥 createTask failed:', error)
+      throw error
+    }
   }
 
+  /**
+   * Actualizar tarea existente
+   */
   async updateTask(id: number, data: UpdateTaskDto): Promise<Task> {
-    const safeData = this.ultraSafeParams(data)
-    const response: AxiosResponse = await this.api.put(`/tasks/${id}`, safeData)
-    return response.data.data || response.data
+    try {
+      const safeData = this.safeParams(data)
+      const response: AxiosResponse = await this.api.put(`/tasks/${id}`, safeData)
+      return response.data.data || response.data
+    } catch (error) {
+      console.error('💥 updateTask failed:', error)
+      throw error
+    }
   }
 
+  /**
+   * Eliminar tarea
+   */
   async deleteTask(id: number): Promise<void> {
-    await this.api.delete(`/tasks/${id}`)
+    try {
+      await this.api.delete(`/tasks/${id}`)
+    } catch (error) {
+      console.error('💥 deleteTask failed:', error)
+      throw error
+    }
   }
 
+  /**
+   * Obtener prioridades disponibles
+   */
   async getPriorities(): Promise<Priority[]> {
     try {
       const response: AxiosResponse = await this.api.get('/priorities')
       return response.data.data || response.data || []
     } catch (error) {
+      console.error('💥 getPriorities failed:', error)
       return []
     }
   }
 
+  /**
+   * Obtener tags disponibles
+   */
   async getTags(): Promise<Tag[]> {
     try {
       const response: AxiosResponse = await this.api.get('/tags')
       return response.data.data || response.data || []
     } catch (error) {
+      console.error('💥 getTags failed:', error)
       return []
     }
   }
 
+  /**
+   * 
+   * Check connection
+   */
+  public healthCheck() {
+    return this.testConnection();
+  }
+
+  /**
+   * Test de conectividad
+   */
   async testConnection(): Promise<boolean> {
     try {
       await this.api.get('/health')
@@ -186,12 +226,32 @@ class TaskService {
     }
   }
 
+  /**
+   * Obtener configuración actual
+   */
   getConfig() {
     return {
       baseURL: this.api.defaults.baseURL,
       timeout: this.api.defaults.timeout
     }
   }
+}
+
+// Helper functions para trabajar con la nueva estructura
+export const taskHelpers = {
+  getStatusValue: (task: Task) => task.status.value,
+  getStatusLabel: (task: Task) => task.status.label,
+  getStatusColor: (task: Task) => task.status.color,
+  getPriorityName: (task: Task) => task.priority.name,
+  getPriorityLabel: (task: Task) => task.priority.label,
+  getPriorityColor: (task: Task) => task.priority.color,
+  isOverdue: (task: Task) => task.dates.is_overdue,
+  canEdit: (task: Task) => task.meta.can_edit,
+  getDaysUntilDue: (task: Task) => task.dates.days_until_due,
+  getFormattedDueDate: (task: Task) => task.dates.formatted_due_date,
+  getCreatedAt: (task: Task) => task.dates.created_at,
+  getUpdatedAt: (task: Task) => task.dates.updated_at,
+  getUrgencyLevel: (task: Task) => task.meta.urgency_level
 }
 
 export const taskService = new TaskService()
