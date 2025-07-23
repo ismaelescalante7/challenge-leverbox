@@ -13,7 +13,7 @@
                 class="form-input pl-10"
                 :disabled="loading"
               />
-              <MagnifyingGlassIcon class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+              <MagnifyingGlassIcon class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
               
               <button
                 v-if="searchQuery"
@@ -162,9 +162,12 @@
   // Methods
   const updateSearch = (event: Event): void => {
     const target = event.target as HTMLInputElement
-    emit('update:searchQuery', target.value)
-    // Emitir search después de un pequeño delay para mejor UX
-    setTimeout(() => emit('search'), 100)
+    if (target.value.length > 3) {
+        emit('update:searchQuery', target.value)
+        // Emitir search después de un pequeño delay para mejor UX
+        setTimeout(() => emit('search'), 100)
+    }
+   
   }
   
   const updateStatusFilter = (event: Event): void => {

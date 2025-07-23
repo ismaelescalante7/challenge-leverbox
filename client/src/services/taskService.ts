@@ -72,39 +72,49 @@ class TaskService {
       return result
     }
 
+    console.log('🔍 Input params:', params)
+
     try {
-      const jsonString = JSON.stringify(params, (key, value) => {
-        if (typeof value === 'function' || typeof value === 'symbol' || value === undefined) {
-          return undefined
+      // Procesar cada parámetro directamente sin JSON stringify/parse
+      for (const [key, value] of Object.entries(params)) {
+        if (value === null || value === undefined || value === '') {
+          continue
         }
-        
-        // Para query params, convertir arrays a strings
-        if (Array.isArray(value)) {
-          return value.length > 0 ? value.join(',') : undefined
-        }
-        
-        if (value && typeof value === 'object' && value.constructor === Object) {
-          return value.id || value.value || String(value)
-        }
-        
-        return value
-      })
-      
-      const parsed = JSON.parse(jsonString)
-      
-      for (const [key, value] of Object.entries(parsed)) {
-        if (value !== null && value !== undefined && value !== '') {
-          if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-            result[key] = value
+
+        // Casos específicos para query params
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+          result[key] = value
+        } 
+        else if (Array.isArray(value)) {
+          // Arrays: convertir a string separado por comas
+          if (value.length > 0) {
+            result[key] = value.join(',')
+          }
+        } 
+        else if (value && typeof value === 'object') {
+          // Objetos: extraer valor útil
+          if (value.hasOwnProperty('id') && value.id) {
+            result[key] = value.id
+          } else if (value.hasOwnProperty('value') && value.value) {
+            result[key] = value.value
+          } else if (value.hasOwnProperty('name') && value.name) {
+            result[key] = value.name
+          } else {
+            // Fallback: convertir a string
+            const stringValue = String(value)
+            if (stringValue !== '[object Object]') {
+              result[key] = stringValue
+            }
           }
         }
       }
       
-      console.log('🧹 Safe query params:', result)
+      console.log('🧹 Safe query params result:', result)
       return result
       
     } catch (error) {
-      console.error('💥 Error serializing query params:', error)
+      console.error('💥 Error processing query params:', error)
+      console.error('💥 Original params:', params)
       return {}
     }
   }

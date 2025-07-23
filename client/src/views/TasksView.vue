@@ -172,7 +172,7 @@ const applyFilters = (): void => {
   if (filters.value?.priority_id) {
     filterParams.priority_id = filters.value.priority_id
   }
-  
+
   // Aplicar filtros usando el store
   tasksStore.updateFilters(filterParams)
 }

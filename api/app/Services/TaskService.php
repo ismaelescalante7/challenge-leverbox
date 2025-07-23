@@ -8,7 +8,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class TaskService
 {
@@ -253,11 +252,6 @@ class TaskService
             if (!empty($tagIds)) {
                 $cleanFilters['tag_ids'] = $tagIds;
             }
-        }
-
-        // Overdue filter
-        if (isset($filters['overdue'])) {
-            $cleanFilters['overdue'] = filter_var($filters['overdue'], FILTER_VALIDATE_BOOLEAN);
         }
 
         // Search filter

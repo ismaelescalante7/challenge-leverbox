@@ -276,6 +276,8 @@ export const useTasksStore = defineStore('tasks', () => {
   // Filter actions
   const updateFilters = (newFilters: Partial<TaskFilters>): void => {
     Object.assign(filters.value, newFilters)
+    console.log('updatefilters')
+    console.log(filters)
     fetchTasks()
   }
 
