@@ -32,20 +32,13 @@ Route::middleware('auth:sanctum')->get('/user', fn(Request $request) => $request
 |--------------------------------------------------------------------------
 */
 Route::prefix('tasks')->name('tasks.')->group(function () {
-    // Special endpoints (before resource routes)
-    //Route::get('statistics', [TaskController::class, 'stats'])->name('stats');
     Route::get('search', [TaskController::class, 'search'])->name('search');
-    //Route::get('overdue', [TaskController::class, 'overdue'])->name('overdue');
-    //Route::get('by-status/{status}', [TaskController::class, 'byStatus'])->name('by-status');
     
-    // Bulk operations
     Route::patch('bulk-update', [TaskController::class, 'bulkUpdate'])->name('bulk-update');
     Route::delete('bulk-delete', [TaskController::class, 'bulkDelete'])->name('bulk-delete');
     
-    // Individual task status update
     Route::patch('{task}/status', [TaskController::class, 'updateStatus'])->name('update-status');
     
-    // Standard CRUD operations
     Route::apiResource('/', TaskController::class)
          ->parameters(['' => 'task'])
          ->names([

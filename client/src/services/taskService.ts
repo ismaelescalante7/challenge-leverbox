@@ -28,20 +28,30 @@ class TaskService {
     })
 
     this.setupInterceptors()
+    console.log('🔧 TaskService initialized with:', baseURL)
   }
 
   private setupInterceptors(): void {
     this.api.interceptors.request.use(
       (config) => {
+        console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
+        if (config.params) {
+          console.log('📦 Query params:', config.params)
+        }
+        if (config.data) {
+          console.log('📦 Request body:', config.data)
+        }
         return config
       },
       (error) => {
+        console.error('❌ Request Error:', error)
         return Promise.reject(error)
       }
     )
 
     this.api.interceptors.response.use(
       (response) => {
+        console.log(`✅ ${response.status} ${response.config.url}`)
         return response
       },
       (error) => {
@@ -52,9 +62,9 @@ class TaskService {
   }
 
   /**
-   * Serializar parámetros de forma segura
+   * Serializar parámetros SOLO para query strings (filtros)
    */
-  private safeParams(params: any): Record<string, string | number | boolean> {
+  private safeQueryParams(params: any): Record<string, string | number | boolean> {
     const result: Record<string, string | number | boolean> = {}
     
     if (!params || typeof params !== 'object') {
@@ -67,6 +77,7 @@ class TaskService {
           return undefined
         }
         
+        // Para query params, convertir arrays a strings
         if (Array.isArray(value)) {
           return value.length > 0 ? value.join(',') : undefined
         }
@@ -88,12 +99,40 @@ class TaskService {
         }
       }
       
+      console.log('🧹 Safe query params:', result)
       return result
       
     } catch (error) {
-      console.error('💥 Error serializing params:', error)
+      console.error('💥 Error serializing query params:', error)
       return {}
     }
+  }
+
+  /**
+   * Limpiar datos para envío en el body (crear/actualizar)
+   */
+  private cleanBodyData(data: any): Record<string, any> {
+    const result: Record<string, any> = {}
+    
+    if (!data || typeof data !== 'object') {
+      return result
+    }
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== null && value !== undefined && value !== '') {
+        // Para el body, mantener arrays como arrays
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            result[key] = value
+          }
+        } else {
+          result[key] = value
+        }
+      }
+    }
+    
+    console.log('🧹 Clean body data:', result)
+    return result
   }
 
   /**
@@ -101,10 +140,11 @@ class TaskService {
    */
   async getTasks(filters: TaskFilters = {}): Promise<TasksApiResponse> {
     try {
-      const safeParams = this.safeParams(filters)
+      // Para GET /tasks, usar safeQueryParams
+      const queryParams = this.safeQueryParams(filters)
       
       const response: AxiosResponse<TasksApiResponse> = await this.api.get('/tasks', { 
-        params: safeParams 
+        params: queryParams 
       })
       
       return response.data
@@ -133,8 +173,9 @@ class TaskService {
    */
   async createTask(data: CreateTaskDto): Promise<Task> {
     try {
-      const safeData = this.safeParams(data)
-      const response: AxiosResponse = await this.api.post('/tasks', safeData)
+      // Para POST /tasks, usar cleanBodyData (mantiene arrays)
+      const cleanData = this.cleanBodyData(data)
+      const response: AxiosResponse = await this.api.post('/tasks', cleanData)
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 createTask failed:', error)
@@ -147,8 +188,9 @@ class TaskService {
    */
   async updateTask(id: number, data: UpdateTaskDto): Promise<Task> {
     try {
-      const safeData = this.safeParams(data)
-      const response: AxiosResponse = await this.api.put(`/tasks/${id}`, safeData)
+      // Para PUT /tasks/{id}, usar cleanBodyData (mantiene arrays)
+      const cleanData = this.cleanBodyData(data)
+      const response: AxiosResponse = await this.api.put(`/tasks/${id}`, cleanData)
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 updateTask failed:', error)
@@ -164,6 +206,66 @@ class TaskService {
       await this.api.delete(`/tasks/${id}`)
     } catch (error) {
       console.error('💥 deleteTask failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Actualizar estado de tarea
+   */
+  async updateTaskStatus(id: number, status: string): Promise<Task> {
+    try {
+      const response: AxiosResponse = await this.api.patch(`/tasks/${id}/status`, { status })
+      return response.data.data || response.data
+    } catch (error) {
+      console.error('💥 updateTaskStatus failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Búsqueda de tareas
+   */
+  async searchTasks(query: string): Promise<Task[]> {
+    try {
+      const response: AxiosResponse = await this.api.get('/tasks/search', { 
+        params: { q: query } 
+      })
+      return response.data.data || response.data || []
+    } catch (error) {
+      console.error('💥 searchTasks failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Actualización masiva de tareas
+   */
+  async bulkUpdateTasks(taskIds: number[], updateData: Partial<UpdateTaskDto>): Promise<Task[]> {
+    try {
+      const cleanData = this.cleanBodyData({
+        task_ids: taskIds,
+        ...updateData
+      })
+      
+      const response: AxiosResponse = await this.api.patch('/tasks/bulk', cleanData)
+      return response.data.data || response.data || []
+    } catch (error) {
+      console.error('💥 bulkUpdateTasks failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Eliminación masiva de tareas
+   */
+  async bulkDeleteTasks(taskIds: number[]): Promise<void> {
+    try {
+      await this.api.delete('/tasks/bulk', {
+        data: { task_ids: taskIds }
+      })
+    } catch (error) {
+      console.error('💥 bulkDeleteTasks failed:', error)
       throw error
     }
   }
@@ -195,11 +297,10 @@ class TaskService {
   }
 
   /**
-   * 
-   * Check connection
+   * Health check
    */
-  public healthCheck() {
-    return this.testConnection();
+  public healthCheck(): Promise<boolean> {
+    return this.testConnection()
   }
 
   /**
