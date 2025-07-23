@@ -26,6 +26,18 @@ const routes: RouteRecordRaw[] = [
       description: 'Manage your tasks'
     }
   },
+  ,
+  {
+    path: '/tasks/:id',
+    name: 'TaskDetail',
+    component: () => import('@/views/TaskDetailView.vue'),
+    meta: {
+      title: 'Task Detail'
+    },
+    props: route => ({ 
+      id: Number(route.params.id) 
+    })
+  },
  /*  {
     path: '/tasks/:id',
     name: 'task-detail',

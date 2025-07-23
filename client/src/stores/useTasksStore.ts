@@ -142,9 +142,44 @@ export const useTasksStore = defineStore('tasks', () => {
     error.value = null
     
     try {
-      currentTask.value = await taskService.getTask(id)
+      console.log('📥 Store: Fetching task ID:', id)
+      const task = await taskService.getTask(id)
+      currentTask.value = task
+      console.log('✅ Store: Task fetched successfully:', task.id)
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch task'
+      console.error('💥 Store: Fetch task failed:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Update task status specifically
+  const updateTaskStatus = async (id: number, status: TaskStatus): Promise<void> => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      console.log('📥 Store: Updating task status ID:', id, 'to:', status)
+      const updatedTask = await taskService.updateTaskStatus(id, status)
+      
+      // Actualizar en la lista
+      const index = tasks.value.findIndex(t => t.id === id)
+      if (index !== -1) {
+        tasks.value[index] = updatedTask
+      }
+      
+      // Actualizar tarea actual si coincide
+      if (currentTask.value?.id === id) {
+        currentTask.value = updatedTask
+      }
+      
+      console.log('✅ Store: Task status updated successfully')
+    } catch (err: any) {
+      error.value = err.message || 'Failed to update task status'
+      console.error('💥 Store: Update status failed:', err)
+      throw err
     } finally {
       loading.value = false
     }
@@ -355,6 +390,7 @@ export const useTasksStore = defineStore('tasks', () => {
     // Task Actions
     fetchTasks,
     fetchTask,
+    updateTaskStatus,
     createTask,
     updateTask,
     deleteTask,

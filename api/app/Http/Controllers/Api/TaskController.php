@@ -141,8 +141,7 @@ class TaskController extends Controller
             $updatedTask = $this->taskService->updateTaskStatus($task, $request->status);
 
             return $this->updatedResponse(
-                new TaskResource($updatedTask),
-                'Task status updated successfully'
+                new TaskResource($updatedTask)
             );
 
         } catch (\InvalidArgumentException $e) {
@@ -241,8 +240,7 @@ class TaskController extends Controller
             }
 
             return $this->updatedResponse(
-                TaskResource::collection(collect($updatedTasks)),
-                'Tasks updated successfully'
+                TaskResource::collection(collect($updatedTasks))
             );
 
         } catch (\Exception $e) {

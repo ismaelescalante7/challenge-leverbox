@@ -190,7 +190,7 @@ class TaskService {
     try {
       // Para PUT /tasks/{id}, usar cleanBodyData (mantiene arrays)
       const cleanData = this.cleanBodyData(data)
-      const response: AxiosResponse = await this.api.put(`/tasks/${id}`, cleanData)
+      const response: AxiosResponse = await this.api.patch(`/tasks/${id}`, cleanData)
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 updateTask failed:', error)
