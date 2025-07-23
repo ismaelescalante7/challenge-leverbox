@@ -3,7 +3,6 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 // Lazy load components
 const Dashboard = () => import('@/views/DashboardView.vue')
 const Tasks = () => import('@/views/TasksView.vue')
-const TaskDetail = () => import('@/views/TaskDetailView.vue')
 const NotFound = () => import('@/views/NotFoundView.vue')
 
 const routes: RouteRecordRaw[] = [
