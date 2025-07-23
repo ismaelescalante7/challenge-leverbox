@@ -110,11 +110,7 @@ export const useTasksStore = defineStore('tasks', () => {
       if (filters.value.priority_id && filters.value.priority_id !== '') {
         cleanFilters.priority_id = filters.value.priority_id
       }
-      
-      if (typeof filters.value.overdue === 'boolean') {
-        cleanFilters.overdue = filters.value.overdue
-      }
-      
+
       if (Array.isArray(filters.value.tag_ids) && filters.value.tag_ids.length > 0) {
         cleanFilters.tag_ids = [...filters.value.tag_ids]
       }

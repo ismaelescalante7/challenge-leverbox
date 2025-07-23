@@ -4,8 +4,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 const Dashboard = () => import('@/views/DashboardView.vue')
 const Tasks = () => import('@/views/TasksView.vue')
 const TaskDetail = () => import('@/views/TaskDetailView.vue')
-/* const Reports = () => import('@/views/ReportsView.vue')
-const NotFound = () => import('@/views/NotFoundView.vue') */
+const NotFound = () => import('@/views/NotFoundView.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -38,27 +37,6 @@ const routes: RouteRecordRaw[] = [
       id: Number(route.params.id) 
     })
   },
- /*  {
-    path: '/tasks/:id',
-    name: 'task-detail',
-    component: TaskDetail,
-    props: (route) => ({ 
-      id: parseInt(route.params.id as string) 
-    }),
-    meta: {
-      title: 'Task Detail',
-      description: 'View and edit task details'
-    }
-  },
-  {
-    path: '/reports',
-    name: 'reports',
-    component: Reports,
-    meta: {
-      title: 'Reports',
-      description: 'Task reports and analytics'
-    }
-  },
   {
     path: '/404',
     name: 'not-found',
@@ -66,11 +44,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Page Not Found'
     }
-  }, */
-  {
-    path: '/:pathMatch(.*)*',
-    redirect: '/404'
-  }
+  },
 ]
 
 const router = createRouter({

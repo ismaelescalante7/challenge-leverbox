@@ -327,21 +327,123 @@ class TaskService {
   }
 }
 
-// Helper functions para trabajar con la nueva estructura
+// Helper functions SEGURAS para trabajar con la nueva estructura
 export const taskHelpers = {
-  getStatusValue: (task: Task) => task.status.value,
-  getStatusLabel: (task: Task) => task.status.label,
-  getStatusColor: (task: Task) => task.status.color,
-  getPriorityName: (task: Task) => task.priority.name,
-  getPriorityLabel: (task: Task) => task.priority.label,
-  getPriorityColor: (task: Task) => task.priority.color,
-  isOverdue: (task: Task) => task.dates.is_overdue,
-  canEdit: (task: Task) => task.meta.can_edit,
-  getDaysUntilDue: (task: Task) => task.dates.days_until_due,
-  getFormattedDueDate: (task: Task) => task.dates.formatted_due_date,
-  getCreatedAt: (task: Task) => task.dates.created_at,
-  getUpdatedAt: (task: Task) => task.dates.updated_at,
-  getUrgencyLevel: (task: Task) => task.meta.urgency_level
+  // Status helpers con validación
+  getStatusValue: (task: Task): string => {
+    if (typeof task.status === 'string') return task.status
+    return task.status?.value || 'pending'
+  },
+  
+  getStatusLabel: (task: Task): string => {
+    if (typeof task.status === 'string') return task.status
+    return task.status?.label || task.status?.value || 'Pending'
+  },
+  
+  getStatusColor: (task: Task): string | undefined => {
+    if (typeof task.status === 'string') return undefined
+    return task.status?.color
+  },
+
+  // Priority helpers con validación
+  getPriorityName: (task: Task): string => {
+    if (!task.priority) return 'Normal'
+    if (typeof task.priority === 'string') return task.priority
+    return task.priority?.name || task.priority?.label || 'Normal'
+  },
+  
+  getPriorityLabel: (task: Task): string => {
+    if (!task.priority) return 'Normal'
+    if (typeof task.priority === 'string') return task.priority
+    return task.priority?.label || task.priority?.name || 'Normal'
+  },
+  
+  getPriorityColor: (task: Task): string | undefined => {
+    if (!task.priority || typeof task.priority === 'string') return undefined
+    return task.priority?.color
+  },
+
+  // Date helpers con validación
+  isOverdue: (task: Task): boolean => {
+    return task.dates?.is_overdue || false
+  },
+  
+  getDaysUntilDue: (task: Task): number | null => {
+    return task.dates?.days_until_due ?? null
+  },
+  
+  getFormattedDueDate: (task: Task): string | null => {
+    return task.dates?.formatted_due_date || task.dates?.due_date || null
+  },
+  
+  getCreatedAt: (task: Task): string => {
+    return task.dates?.created_at || task.created_at || ''
+  },
+  
+  getUpdatedAt: (task: Task): string => {
+    return task.dates?.updated_at || task.updated_at || ''
+  },
+
+  // Meta helpers con validación
+  canEdit: (task: Task): boolean => {
+    return task.meta?.can_edit !== false // Por defecto true
+  },
+  
+  getUrgencyLevel: (task: Task): string => {
+    return task.meta?.urgency_level || 'normal'
+  },
+
+  // Helper para validar estructura de tarea
+  isValidTask: (task: any): task is Task => {
+    return task && 
+           typeof task === 'object' && 
+           typeof task.id !== 'undefined' && 
+           typeof task.title === 'string'
+  },
+
+  // Helper para normalizar status
+  normalizeStatus: (status: any): { value: string; label: string; color?: string } => {
+    if (typeof status === 'string') {
+      return {
+        value: status,
+        label: status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
+      }
+    }
+    
+    if (status && typeof status === 'object') {
+      return {
+        value: status.value || 'pending',
+        label: status.label || status.value || 'Pending',
+        color: status.color
+      }
+    }
+    
+    return { value: 'pending', label: 'Pending' }
+  },
+
+  // Helper para normalizar priority
+  normalizePriority: (priority: any): { id: number; name: string; label: string; color?: string } | null => {
+    if (!priority) return null
+    
+    if (typeof priority === 'string') {
+      return {
+        id: 0,
+        name: priority,
+        label: priority
+      }
+    }
+    
+    if (priority && typeof priority === 'object') {
+      return {
+        id: priority.id || 0,
+        name: priority.name || priority.label || 'Normal',
+        label: priority.label || priority.name || 'Normal',
+        color: priority.color
+      }
+    }
+    
+    return null
+  }
 }
 
 export const taskService = new TaskService()

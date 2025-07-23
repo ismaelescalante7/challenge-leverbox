@@ -1,40 +1,81 @@
 <template>
   <span 
     :class="statusClasses"
-    :style="{ backgroundColor: statusColor + '20', color: statusColor, borderColor: statusColor }"
+    :style="customStyle"
   >
+    <component :is="statusIcon" class="w-3 h-3 mr-1" />
     {{ statusLabel }}
   </span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { ClockIcon, PlayIcon, CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { useStatusColors } from '@/composables/useStatusColors'
+import { taskHelpers } from '@/services/taskService'
 import type { StatusObject } from '@/types/task'
 
 interface Props {
-  status: StatusObject  // Ahora recibe el objeto completo
+  status: StatusObject | string
+  size?: 'sm' | 'md' | 'lg'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  size: 'md'
+})
 
-const statusLabel = computed(() => props.status.label)
+// Composable para colores consistentes
+const { getStatusBadgeClasses, getCustomColor } = useStatusColors()
 
-const statusColor = computed(() => props.status.color)
+// Extraer valores del status
+const statusValue = computed(() => {
+  return typeof props.status === 'string' ? props.status : props.status.value
+})
 
+const statusLabel = computed(() => {
+  if (typeof props.status === 'string') {
+    return props.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+  return props.status.label || statusValue.value.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+})
+
+// Icono del status
+const statusIcon = computed(() => {
+  switch (statusValue.value) {
+    case 'pending': return ClockIcon
+    case 'in_progress': return PlayIcon
+    case 'completed': return CheckCircleIcon
+    default: return ClockIcon
+  }
+})
+
+// Clases CSS usando el sistema de colores consistente
 const statusClasses = computed(() => {
-  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border'
-  
-  const statusSpecificClasses: Record<string, string> = {
-    'pending': 'bg-gray-100 text-gray-800 border-gray-300',
-    'in_progress': 'bg-blue-100 text-blue-800 border-blue-300', 
-    'completed': 'bg-green-100 text-green-800 border-green-300'
+  const baseClasses = {
+    'sm': 'px-2 py-0.5 text-xs',
+    'md': 'px-2.5 py-0.5 text-xs',
+    'lg': 'px-3 py-1 text-sm'
+  }[props.size]
+
+  // Si no hay color personalizado, usar las clases del sistema
+  if (typeof props.status === 'string' || !props.status.color) {
+    return `${baseClasses} ${getStatusBadgeClasses(statusValue.value)}`
   }
-  
-  if (!props.status.color) {
-    return `${baseClasses} ${statusSpecificClasses[props.status.value] || 'bg-gray-100 text-gray-800 border-gray-300'}`
+
+  // Si hay color personalizado, usar clases base
+  return `${baseClasses} inline-flex items-center rounded-full font-medium border`
+})
+
+// Estilo personalizado si el status tiene color custom
+const customStyle = computed(() => {
+  if (typeof props.status === 'object' && props.status.color) {
+    return {
+      backgroundColor: props.status.color + '20',
+      color: props.status.color,
+      borderColor: props.status.color + '50'
+    }
   }
-  
-  return baseClasses
+  return undefined
 })
 </script>
 
