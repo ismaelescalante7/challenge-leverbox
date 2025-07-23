@@ -76,7 +76,7 @@
                   :key="priority.id"
                   :value="priority.id"
                 >
-                  {{ priority.name }}
+                  {{ priority.label || priority.name }}
                 </option>
               </select>
             </div>
@@ -112,7 +112,7 @@
                     class="form-checkbox"
                     :disabled="loading"
                   />
-                  <span class="ml-2 text-sm text-gray-700">{{ tag.name }}</span>
+                  <span class="ml-2 text-sm text-gray-700">{{ tag.label || tag.name }}</span>
                 </label>
               </div>
             </div>
@@ -148,6 +148,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useDateUtils } from '@/composables/useDateUtils'
+import { taskHelpers } from '@/services/taskService'
 import type { Task, CreateTaskDto, UpdateTaskDto, Priority, Tag } from '@/types/task'
 
 interface Props {
@@ -199,14 +200,13 @@ const isFormValid = computed(() => {
 // Methods
 const resetForm = (): void => {
   if (props.task) {
-    // Edit mode - populate form with task data
     form.value = {
       title: props.task.title,
       description: props.task.description || '',
-      status: props.task.status,
-      priority_id: props.task.priority_id,
-      due_date: props.task.due_date ? formatDateForInput(props.task.due_date) : '',
-      tag_ids: props.task.tags.map(tag => tag.id)
+      status: taskHelpers.getStatusValue(props.task) as any,
+      priority_id: props.task.priority?.id || null,
+      due_date: props.task.dates?.due_date ? formatDateForInput(props.task.dates.due_date) : '',
+      tag_ids: props.task.tags?.map(tag => tag.id) || []
     }
   } else {
     // Create mode - reset to defaults
