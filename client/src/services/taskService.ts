@@ -8,7 +8,8 @@ import type {
   Priority,
   Tag,
   TasksApiResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  TaskStatus
 } from '@/types/task'
 
 class TaskService {
@@ -188,7 +189,6 @@ class TaskService {
    */
   async updateTask(id: number, data: UpdateTaskDto): Promise<Task> {
     try {
-      // Para PUT /tasks/{id}, usar cleanBodyData (mantiene arrays)
       const cleanData = this.cleanBodyData(data)
       const response: AxiosResponse = await this.api.patch(`/tasks/${id}`, cleanData)
       return response.data.data || response.data
@@ -213,9 +213,10 @@ class TaskService {
   /**
    * Actualizar estado de tarea
    */
-  async updateTaskStatus(id: number, status: string): Promise<Task> {
+  async updateTaskStatus(id: number, status: TaskStatus): Promise<Task> {
     try {
       const response: AxiosResponse = await this.api.patch(`/tasks/${id}/status`, { status })
+      console.log(response)
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 updateTaskStatus failed:', error)

@@ -10,7 +10,8 @@ import type {
   Tag, 
   TasksApiResponse,
   PaginationInfo,
-  AvailableFilters
+  AvailableFilters,
+  TaskStatus
 } from '@/types/task'
 
 export const useTasksStore = defineStore('tasks', () => {
