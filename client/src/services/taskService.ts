@@ -28,30 +28,20 @@ class TaskService {
     })
 
     this.setupInterceptors()
-    console.log('🔧 TaskService (TS) initialized with:', baseURL)
   }
 
   private setupInterceptors(): void {
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
-        console.log('📦 Sending params:', config.params)
         return config
       },
       (error) => {
-        console.error('❌ Request Error:', error)
         return Promise.reject(error)
       }
     )
 
     this.api.interceptors.response.use(
       (response) => {
-        console.log(`✅ ${response.status} ${response.config.url}`)
-        console.log('📦 Response data structure:', {
-          hasData: !!response.data.data,
-          hasPagination: !!response.data.pagination,
-          dataLength: response.data.data?.length || 0
-        })
         return response
       },
       (error) => {
@@ -98,7 +88,6 @@ class TaskService {
         }
       }
       
-      console.log('🛡️ Safe params:', result)
       return result
       
     } catch (error) {
@@ -118,7 +107,6 @@ class TaskService {
         params: safeParams 
       })
       
-      console.log('📋 Tasks received:', response.data.data.length)
       return response.data
       
     } catch (error) {

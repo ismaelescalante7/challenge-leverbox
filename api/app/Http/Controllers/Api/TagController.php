@@ -22,8 +22,7 @@ class TagController extends Controller
             $tags = Tag::withCount('tasks')->get();
 
             return $this->successResponse(
-                TagResource::collection($tags),
-                'Tags retrieved successfully'
+                TagResource::collection($tags)
             );
 
         } catch (\Exception $e) {

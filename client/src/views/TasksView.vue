@@ -476,6 +476,9 @@ const {
   tasksByStatus
 } = storeToRefs(tasksStore)
 
+console.log('all tags')
+console.log(tags)
+
 // Local state
 const searchQuery = ref('')
 const showTaskModal = ref(false)

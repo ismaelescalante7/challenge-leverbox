@@ -1,149 +1,117 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
-    <!-- Navigation Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <!-- Logo and Title -->
+  <!-- Loading Screen -->
+  <AppLoading
+    v-if="!tasksStore.initialized && !initError"
+    :loading="tasksStore.loading"
+    :loading-tasks="tasksStore.loading"
+    :loading-priorities="tasksStore.loadingPriorities"
+    :loading-tags="tasksStore.loadingTags"
+    :error="initError"
+    @retry="initializeApp"
+  />
+  
+  <!-- Main App -->
+  <div v-else id="app" class="min-h-screen bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow mb-8">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <router-link to="/" class="flex items-center space-x-3">
-              <div class="p-2 bg-blue-600 rounded-lg">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                  </path>
-                </svg>
-              </div>
-              <div>
-                <h1 class="text-xl font-bold text-gray-900">Task Manager</h1>
-                <p class="text-xs text-gray-500">Laravel 12 + Vue 3</p>
-              </div>
-            </router-link>
+            <DocumentTextIcon class="w-6 h-6 text-blue-600 mr-2" />
+            <h1 class="text-xl font-bold text-gray-900">📋 Task Management</h1>
           </div>
-
-          <!-- Navigation Links -->
-          <nav class="hidden md:flex space-x-8">
+          
+          <div class="flex space-x-4 items-center">
             <router-link 
               to="/" 
-              class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'text-blue-600 bg-blue-50': $route.path === '/' }"
+              class="nav-link"
+              active-class="nav-link-active"
             >
+              <HomeIcon class="w-4 h-4 mr-1" />
               Dashboard
             </router-link>
             <router-link 
               to="/tasks" 
-              class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'text-blue-600 bg-blue-50': $route.path === '/tasks' }"
+              class="nav-link"
+              active-class="nav-link-active"
             >
+              <DocumentTextIcon class="w-4 h-4 mr-1" />
               Tasks
             </router-link>
-          </nav>
-
-          <!-- Actions -->
-          <div class="flex items-center space-x-4">
-            <!-- Health Status -->
-            <div class="flex items-center space-x-2">
-              <div 
-                :class="[
-                  'w-2 h-2 rounded-full',
-                  isApiHealthy ? 'bg-green-400' : 'bg-red-400'
-                ]"
-              ></div>
-              <span class="text-sm text-gray-600">
-                {{ isApiHealthy ? 'Connected' : 'Disconnected' }}
+            
+            <!-- Stats Badge -->
+            <div class="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+              <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                {{ tasksStore.taskStats.total }} tasks
+              </span>
+              <span 
+                v-if="tasksStore.taskStats.overdue > 0"
+                class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium"
+              >
+                {{ tasksStore.taskStats.overdue }} overdue
               </span>
             </div>
-
-            <!-- Mobile menu button -->
-            <button 
-              @click="showMobileMenu = !showMobileMenu"
-              class="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            
+            <!-- Refresh Button -->
+            <button
+              @click="refreshAll"
+              :disabled="tasksStore.isLoading"
+              class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              title="Refresh all data"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
+              <ArrowPathIcon 
+                class="w-5 h-5" 
+                :class="{ 'animate-spin': tasksStore.isLoading }"
+              />
             </button>
           </div>
         </div>
-
-        <!-- Mobile Navigation -->
-        <div v-if="showMobileMenu" class="md:hidden pb-4">
-          <div class="flex flex-col space-y-2">
-            <router-link 
-              to="/" 
-              @click="showMobileMenu = false"
-              class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Dashboard
-            </router-link>
-            <router-link 
-              to="/tasks" 
-              @click="showMobileMenu = false"
-              class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Tasks
-            </router-link>
-            <router-link 
-              to="/reports" 
-              @click="showMobileMenu = false"
-              class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Reports
-            </router-link>
-          </div>
-        </div>
       </div>
-    </header>
-
+    </nav>
+    
     <!-- Main Content -->
-    <main class="flex-1">
-      <!-- Loading Overlay -->
+    <main class="max-w-7xl mx-auto px-4">
+      <!-- Global Error Banner -->
       <div 
-        v-if="globalLoading" 
-        class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"
+        v-if="tasksStore.error" 
+        class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4"
       >
-        <div class="bg-white rounded-lg p-6 shadow-xl">
-          <div class="flex items-center space-x-3">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span class="text-gray-700 font-medium">Loading...</span>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <ExclamationTriangleIcon class="w-5 h-5 text-red-500" />
+            <p class="text-sm text-red-700">{{ tasksStore.error }}</p>
           </div>
+          <button
+            @click="tasksStore.clearError"
+            class="text-red-500 hover:text-red-700"
+          >
+            <XMarkIcon class="w-5 h-5" />
+          </button>
         </div>
       </div>
-
+      
       <!-- Router View -->
       <router-view v-slot="{ Component }">
-        <transition 
-          name="page" 
-          mode="out-in"
-          enter-active-class="duration-200 ease-out"
-          enter-from-class="opacity-0 translate-y-1"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="duration-150 ease-in"
-          leave-from-class="opacity-100 translate-y-0"
-          leave-to-class="opacity-0 translate-y-1"
-        >
+        <Transition name="fade" mode="out-in">
           <component :is="Component" />
-        </transition>
+        </Transition>
       </router-view>
     </main>
-
+    
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex flex-col md:flex-row justify-between items-center">
-          <div class="text-sm text-gray-600">
-            © 2024 Task Management System. Built with Laravel 12 + Vue 3 + TypeScript.
-          </div>
-          <div class="flex items-center space-x-4 mt-4 md:mt-0">
-            <span class="text-xs text-gray-500">Version {{ appVersion }}</span>
-            <a 
-              href="/api/system/info" 
-              target="_blank"
-              class="text-xs text-blue-600 hover:text-blue-800"
-            >
-              System Info
-            </a>
+    <footer class="mt-16 bg-white border-t border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="flex justify-between items-center">
+          <p class="text-sm text-gray-500">
+            Task Management System
+          </p>
+          <div class="flex items-center space-x-4 text-xs text-gray-400">
+            <span>{{ tasksStore.taskStats.total }} Total Tasks</span>
+            <span>{{ tasksStore.priorities.length }} Priorities</span>
+            <span>{{ tasksStore.tags.length }} Tags</span>
+            <span v-if="lastRefresh">
+              Last updated: {{ lastRefresh }}
+            </span>
           </div>
         </div>
       </div>
@@ -152,95 +120,93 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useTasksStore } from '@/stores/useTasksStore';
-import { taskService } from '@/services/taskService';
-import { useNotifications } from '@/composables/useNotifications';
+import { onMounted, ref, watch } from 'vue'
+import { 
+  DocumentTextIcon, 
+  HomeIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon
+} from '@heroicons/vue/24/outline'
+import { useTasksStore } from '@/stores/useTasksStore'
+import { useNotifications } from '@/composables/useNotifications'
+import AppLoading from '@/components/AppLoading.vue'
 
-// Composables
-const router = useRouter()
+// Store and composables
 const tasksStore = useTasksStore()
-const { showError } = useNotifications()
+const { showError, showSuccess } = useNotifications()
 
-// State
-const showMobileMenu = ref(false)
-const globalLoading = ref(false)
-const isApiHealthy = ref(true)
-const appVersion = ref('1.0.0')
-
-// Health check interval
-let healthCheckInterval: number | null = null
+// Local state
+const initError = ref<string | null>(null)
+const lastRefresh = ref<string>('')
 
 // Methods
-const checkApiHealth = async (): Promise<void> => {
-  try {
-    await taskService.healthCheck()
-    isApiHealthy.value = true
-  } catch (error) {
-    isApiHealthy.value = false
-    console.error('API health check failed:', error)
-  }
-}
-
 const initializeApp = async (): Promise<void> => {
-  globalLoading.value = true
+  console.log('🚀 Initializing app...')
+  initError.value = null
   
   try {
-    // Initialize tasks store
     await tasksStore.initialize()
-    
-    // Check API health
-    await checkApiHealth()
-    
+    updateLastRefresh()
     console.log('✅ App initialized successfully')
-  } catch (error) {
-    console.error('❌ Failed to initialize app:', error)
-    showError('Failed to initialize application. Please refresh the page.')
-  } finally {
-    globalLoading.value = false
+  } catch (error: any) {
+    console.error('💥 App initialization failed:', error)
+    initError.value = error.message || 'Failed to load application data'
   }
 }
 
-// Lifecycle
-onMounted(async () => {
-  await initializeApp()
-  
-  // Set up health check interval (every 30 seconds)
-  healthCheckInterval = window.setInterval(checkApiHealth, 30000)
-  
-  // Handle route changes
-  router.beforeEach(() => {
-    showMobileMenu.value = false
-  })
+const refreshAll = async (): Promise<void> => {
+  try {
+    await tasksStore.refreshAll()
+    updateLastRefresh()
+    showSuccess('Data refreshed successfully')
+  } catch (error: any) {
+    showError('Failed to refresh data')
+  }
+}
+
+const updateLastRefresh = (): void => {
+  lastRefresh.value = new Date().toLocaleTimeString()
+}
+
+// Watch for errors
+watch(() => tasksStore.error, (newError) => {
+  if (newError) {
+    showError(newError)
+  }
 })
 
-onUnmounted(() => {
-  if (healthCheckInterval) {
-    clearInterval(healthCheckInterval)
-  }
+// Initialize on mount
+onMounted(async () => {
+  await initializeApp()
 })
 </script>
 
 <style scoped>
-/* Page transition styles */
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+/* Navigation */
+.nav-link {
+  @apply flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors;
 }
 
-.page-enter-from {
+.nav-link-active {
+  @apply text-blue-600 bg-blue-50 font-semibold;
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-  transform: translateY(8px);
 }
 
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-/* Router link active styles */
-.router-link-active {
-  @apply text-blue-600 bg-blue-50;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-link {
+    @apply px-2 py-1 text-xs;
+  }
 }
 </style>

@@ -22,6 +22,11 @@ export const useTasksStore = defineStore('tasks', () => {
   const priorities = ref<Priority[]>([])
   const tags = ref<Tag[]>([])
   
+  // Loading states para resources individuales
+  const loadingPriorities = ref(false)
+  const loadingTags = ref(false)
+  const initialized = ref(false)
+  
   // Pagination actualizada
   const pagination = ref<PaginationInfo>({
     current_page: 1,
@@ -72,7 +77,12 @@ export const useTasksStore = defineStore('tasks', () => {
     overdue: overdueTasks.value.length
   }))
 
-  // Actions
+  // Computed para estado general de loading
+  const isLoading = computed(() => 
+    loading.value || loadingPriorities.value || loadingTags.value
+  )
+
+  // Actions para Tasks
   const fetchTasks = async (page?: number): Promise<void> => {
     console.log('📥 Store: Fetching tasks...')
     loading.value = true
@@ -118,7 +128,6 @@ export const useTasksStore = defineStore('tasks', () => {
       availableFilters.value = response.filters
       
       console.log('📋 Tasks loaded:', tasks.value.length)
-      console.log('📊 Sample task structure:', tasks.value[0])
       
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch tasks'
@@ -141,6 +150,43 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  // Actions para Priorities
+  const fetchPriorities = async (): Promise<void> => {
+    console.log('📥 Store: Fetching priorities...')
+    loadingPriorities.value = true
+    
+    try {
+      const data = await taskService.getPriorities()
+      priorities.value = data
+      console.log('🎯 Priorities loaded:', priorities.value.length)
+    } catch (err: any) {
+      console.error('💥 Failed to fetch priorities:', err)
+      // No lanzar error para no bloquear la app si priorities fallan
+      priorities.value = []
+    } finally {
+      loadingPriorities.value = false
+    }
+  }
+
+  // Actions para Tags
+  const fetchTags = async (): Promise<void> => {
+    console.log('📥 Store: Fetching tags...')
+    loadingTags.value = true
+    
+    try {
+      const data = await taskService.getTags()
+      tags.value = data
+      console.log('🏷️  Tags loaded:', tags.value.length)
+    } catch (err: any) {
+      console.error('💥 Failed to fetch tags:', err)
+      // No lanzar error para no bloquear la app si tags fallan
+      tags.value = []
+    } finally {
+      loadingTags.value = false
+    }
+  }
+
+  // CRUD Operations
   const createTask = async (data: CreateTaskDto): Promise<void> => {
     loading.value = true
     error.value = null
@@ -195,6 +241,7 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  // Filter actions
   const updateFilters = (newFilters: Partial<TaskFilters>): void => {
     Object.assign(filters.value, newFilters)
     fetchTasks()
@@ -219,8 +266,68 @@ export const useTasksStore = defineStore('tasks', () => {
     error.value = null
   }
 
+  // Refresh actions
+  const refreshPriorities = async (): Promise<void> => {
+    await fetchPriorities()
+  }
+
+  const refreshTags = async (): Promise<void> => {
+    await fetchTags()
+  }
+
+  const refreshAll = async (): Promise<void> => {
+    await Promise.all([
+      fetchTasks(),
+      fetchPriorities(),
+      fetchTags()
+    ])
+  }
+
+  // Helper methods
+  const getPriorityById = (id: number): Priority | undefined => {
+    return priorities.value.find(p => p.id === id)
+  }
+
+  const getTagById = (id: number): Tag | undefined => {
+    return tags.value.find(t => t.id === id)
+  }
+
+  const getTagsByIds = (ids: number[]): Tag[] => {
+    return tags.value.filter(t => ids.includes(t.id))
+  }
+
+  // INITIALIZE - Método principal de inicialización
   const initialize = async (): Promise<void> => {
-    await fetchTasks()
+    if (initialized.value) {
+      console.log('📋 Store already initialized, skipping...')
+      return
+    }
+
+    console.log('🚀 Initializing TasksStore...')
+    
+    try {
+      // Cargar todo en paralelo para mejor performance
+      await Promise.all([
+        fetchTasks(),
+        fetchPriorities(),
+        fetchTags()
+      ])
+      
+      initialized.value = true
+      console.log('✅ TasksStore initialized successfully!')
+      console.log(`📊 Loaded: ${tasks.value.length} tasks, ${priorities.value.length} priorities, ${tags.value.length} tags`)
+      
+    } catch (err: any) {
+      console.error('💥 Failed to initialize TasksStore:', err)
+      error.value = 'Failed to initialize application data'
+      throw err
+    }
+  }
+
+  // Force re-initialize
+  const reinitialize = async (): Promise<void> => {
+    initialized.value = false
+    await initialize()
   }
 
   return {
@@ -234,22 +341,43 @@ export const useTasksStore = defineStore('tasks', () => {
     pagination,
     filters,
     availableFilters,
+    loadingPriorities,
+    loadingTags,
+    initialized,
     
     // Computed
     tasksByStatus,
     overdueTasks,
     editableTasks,
     taskStats,
+    isLoading,
     
-    // Actions
+    // Task Actions
     fetchTasks,
     fetchTask,
     createTask,
     updateTask,
     deleteTask,
+    
+    // Resource Actions
+    fetchPriorities,
+    fetchTags,
+    refreshPriorities,
+    refreshTags,
+    refreshAll,
+    
+    // Filter Actions
     updateFilters,
     clearFilters,
     clearError,
-    initialize
+    
+    // Helper Methods
+    getPriorityById,
+    getTagById,
+    getTagsByIds,
+    
+    // Initialization
+    initialize,
+    reinitialize
   }
 })
