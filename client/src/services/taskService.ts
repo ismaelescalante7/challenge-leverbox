@@ -34,7 +34,7 @@ class TaskService {
   private setupInterceptors(): void {
     this.api.interceptors.request.use(
       (config) => {
-       console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
+        console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
         if (config.params) {
           console.log('📦 Query params:', config.params)
         }
@@ -52,10 +52,13 @@ class TaskService {
     this.api.interceptors.response.use(
       (response) => {
         console.log(`✅ ${response.status} ${response.config.url}`)
+        console.log('📦 Response data:', response.data)
         return response
       },
       (error) => {
         console.error('❌ API Error:', error)
+        console.error('❌ Error response:', error.response?.data)
+        console.error('❌ Error status:', error.response?.status)
         return Promise.reject(error)
       }
     )
@@ -183,12 +186,27 @@ class TaskService {
    */
   async createTask(data: CreateTaskDto): Promise<Task> {
     try {
+      console.log('🔍 createTask called with:', data)
+      
       // Para POST /tasks, usar cleanBodyData (mantiene arrays)
       const cleanData = this.cleanBodyData(data)
+      console.log('🔍 Sending clean data:', cleanData)
+      
       const response: AxiosResponse = await this.api.post('/tasks', cleanData)
+      console.log('🔍 createTask response:', response.data)
+      
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 createTask failed:', error)
+      console.error('💥 Original data:', data)
+      
+      // 🔍 DEBUG: Log error details for debugging
+      if (error.response) {
+        console.error('💥 Error status:', error.response.status)
+        console.error('💥 Error data:', error.response.data)
+        console.error('💥 Error headers:', error.response.headers)
+      }
+      
       throw error
     }
   }
@@ -198,11 +216,19 @@ class TaskService {
    */
   async updateTask(id: number, data: UpdateTaskDto): Promise<Task> {
     try {
+      console.log('🔍 updateTask called with:', { id, data })
+      
       const cleanData = this.cleanBodyData(data)
+      console.log('🔍 Sending clean data:', cleanData)
+      
       const response: AxiosResponse = await this.api.patch(`/tasks/${id}`, cleanData)
+      console.log('🔍 updateTask response:', response.data)
+      
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 updateTask failed:', error)
+      console.error('💥 Task ID:', id)
+      console.error('💥 Original data:', data)
       throw error
     }
   }
@@ -335,25 +361,20 @@ class TaskService {
   }
 }
 
-// Helper functions SEGURAS para trabajar con la nueva estructura
+// 🔧 Helper functions ACTUALIZADOS para el modal
 export const taskHelpers = {
-  // Status helpers con validación
+  // Status helpers - SIMPLIFICADOS para el modal
   getStatusValue: (task: Task): string => {
-    if (typeof task.status === 'string') return task.status
-    return task.status?.value || 'pending'
+    // Asumimos que task.status es un string simple
+    return task.status || 'pending'
   },
   
   getStatusLabel: (task: Task): string => {
-    if (typeof task.status === 'string') return task.status
-    return task.status?.label || task.status?.value || 'Pending'
-  },
-  
-  getStatusColor: (task: Task): string | undefined => {
-    if (typeof task.status === 'string') return undefined
-    return task.status?.color
+    const status = task.status || 'pending'
+    return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
   },
 
-  // Priority helpers con validación
+  // Priority helpers - SIMPLIFICADOS
   getPriorityName: (task: Task): string => {
     if (!task.priority) return 'Normal'
     if (typeof task.priority === 'string') return task.priority
@@ -365,40 +386,28 @@ export const taskHelpers = {
     if (typeof task.priority === 'string') return task.priority
     return task.priority?.label || task.priority?.name || 'Normal'
   },
-  
-  getPriorityColor: (task: Task): string | undefined => {
-    if (!task.priority || typeof task.priority === 'string') return undefined
-    return task.priority?.color
-  },
 
-  // Date helpers con validación
+  // Date helpers - SIMPLIFICADOS
   isOverdue: (task: Task): boolean => {
-    return task.dates?.is_overdue || false
-  },
-  
-  getDaysUntilDue: (task: Task): number | null => {
-    return task.dates?.days_until_due ?? null
+    if (!task.due_date) return false
+    return new Date(task.due_date) < new Date()
   },
   
   getFormattedDueDate: (task: Task): string | null => {
-    return task.dates?.formatted_due_date || task.dates?.due_date || null
+    return task.due_date || null
   },
   
   getCreatedAt: (task: Task): string => {
-    return task.dates?.created_at || task.created_at || ''
+    return task.created_at || ''
   },
   
   getUpdatedAt: (task: Task): string => {
-    return task.dates?.updated_at || task.updated_at || ''
+    return task.updated_at || ''
   },
 
-  // Meta helpers con validación
+  // Meta helpers - SIMPLIFICADOS
   canEdit: (task: Task): boolean => {
-    return task.meta?.can_edit !== false // Por defecto true
-  },
-  
-  getUrgencyLevel: (task: Task): string => {
-    return task.meta?.urgency_level || 'normal'
+    return true // Por defecto todas las tareas se pueden editar
   },
 
   // Helper para validar estructura de tarea
@@ -407,50 +416,6 @@ export const taskHelpers = {
            typeof task === 'object' && 
            typeof task.id !== 'undefined' && 
            typeof task.title === 'string'
-  },
-
-  // Helper para normalizar status
-  normalizeStatus: (status: any): { value: string; label: string; color?: string } => {
-    if (typeof status === 'string') {
-      return {
-        value: status,
-        label: status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
-      }
-    }
-    
-    if (status && typeof status === 'object') {
-      return {
-        value: status.value || 'pending',
-        label: status.label || status.value || 'Pending',
-        color: status.color
-      }
-    }
-    
-    return { value: 'pending', label: 'Pending' }
-  },
-
-  // Helper para normalizar priority
-  normalizePriority: (priority: any): { id: number; name: string; label: string; color?: string } | null => {
-    if (!priority) return null
-    
-    if (typeof priority === 'string') {
-      return {
-        id: 0,
-        name: priority,
-        label: priority
-      }
-    }
-    
-    if (priority && typeof priority === 'object') {
-      return {
-        id: priority.id || 0,
-        name: priority.name || priority.label || 'Normal',
-        label: priority.label || priority.name || 'Normal',
-        color: priority.color
-      }
-    }
-    
-    return null
   }
 }
 

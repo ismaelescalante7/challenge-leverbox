@@ -7,12 +7,10 @@ use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Http\Resources\Task\TaskResource;
-use App\Http\Resources\Task\TaskCollection;
 use App\Models\Task;
 use App\Services\TaskService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
@@ -40,11 +38,7 @@ class TaskController extends Controller
             
             return TaskResource::collection($tasks);
 
-        } catch (ValidationException $e) {
-            // Laravel manejará esto automáticamente, pero podemos interceptarlo si necesitamos custom logic
-            throw $e;
-            
-        }  catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['message' => "Error server"], 500);
         }
     }
@@ -66,7 +60,7 @@ class TaskController extends Controller
     public function show(Task $task): JsonResponse
     {
         try {
-            return response()->json(TaskResource::make($task));
+            return response()->json(TaskResource::make($task),201);
 
         } catch (\Exception $e) {
             return response()->json(['message' => "Error server"], 500);
@@ -82,16 +76,10 @@ class TaskController extends Controller
         try {
             $updatedTask = $this->taskService->updateTask($task, $request->validated());
 
-            return $this->updatedResponse(
-                new TaskResource($updatedTask),
-                'Task updated successfully'
-            );
+            return response()->json(TaskResource::make($updatedTask), 200);
         
         } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error updating task',
-                $e->getMessage()
-            );
+            return response()->json(['message' => "Error server"], 500);
         }
     }
 
@@ -104,13 +92,10 @@ class TaskController extends Controller
         try {
             $this->taskService->deleteTask($task);
 
-            return $this->deletedResponse('Task deleted successfully');
+            return response()->json(null, 200);
 
         } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error deleting task',
-                $e->getMessage()
-            );
+            return response()->json(['message' => "Error server"], 500);
         }
     }
 
