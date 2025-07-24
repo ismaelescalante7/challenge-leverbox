@@ -1,22 +1,5 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- 🔍 DEBUG Panel (temporal) -->
-    <div v-if="debugMode" class="debug-panel mb-6">
-      <h4>🔍 DEBUG INFO - Dashboard:</h4>
-      <p><strong>Store loading:</strong> {{ loading }}</p>
-      <p><strong>Store initialized:</strong> {{ initialized }}</p>
-      <p><strong>Total tasks:</strong> {{ tasks.length }}</p>
-      <p><strong>Stats:</strong> {{ JSON.stringify(taskStats) }}</p>
-      <p><strong>tasksByStatus pending:</strong> {{ tasksByStatus.pending.length }}</p>
-      <p><strong>tasksByStatus in_progress:</strong> {{ tasksByStatus.in_progress.length }}</p>
-      <p><strong>tasksByStatus completed:</strong> {{ tasksByStatus.completed.length }}</p>
-      <details>
-        <summary>Full Tasks Array (first 3)</summary>
-        <pre>{{ JSON.stringify(tasks.slice(0, 3), null, 2) }}</pre>
-      </details>
-      <button @click="debugMode = false" class="btn-debug">Hide Debug</button>
-    </div>
-
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -29,20 +12,6 @@
     <div v-if="loading && !initialized" class="text-center py-12">
       <div class="loading-spinner w-8 h-8 mx-auto mb-4"></div>
       <p class="text-gray-500">Loading dashboard...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="error-alert mb-6">
-      <div class="error-content">
-        <ExclamationTriangleIcon class="error-icon" />
-        <div class="error-text">
-          <h3 class="error-title">Failed to load dashboard</h3>
-          <p class="error-message">{{ error.message }}</p>
-        </div>
-        <button @click="retryLoad" class="btn-outline btn-sm">
-          Try Again
-        </button>
-      </div>
     </div>
 
     <!-- Dashboard Content -->
@@ -164,6 +133,7 @@
 </template>
 
 <script setup lang="ts">
+import '@/assets/styles/dashboard.css'
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
@@ -236,7 +206,6 @@ const completedTasks = computed(() => {
   return taskStats.value?.completed || tasksByStatus.value.completed.length || 0
 })
 
-// 🎯 RECENTLY COMPLETED CORREGIDO para usar estructura TaskDates
 const recentlyCompleted = computed(() => {
   console.log('🔍 Dashboard recentlyCompleted computing...')
   const sevenDaysAgo = new Date()
@@ -376,104 +345,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-/* Debug panel */
-.debug-panel {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  font-family: monospace;
-  font-size: 0.875rem;
-}
-
-.debug-panel h4 {
-  margin: 0 0 0.5rem 0;
-  color: #374151;
-}
-
-.debug-panel p {
-  margin: 0.25rem 0;
-  color: #6b7280;
-}
-
-.debug-panel details {
-  margin-top: 0.5rem;
-}
-
-.debug-panel pre {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.25rem;
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  overflow-x: auto;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.btn-debug {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-/* Error Alert */
-.error-alert {
-  border-radius: 0.5rem;
-}
-
-.error-content {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  display: flex;
-  align-items: flex-start;
-}
-
-.error-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: #ef4444;
-  margin-right: 0.75rem;
-  margin-top: 0.125rem;
-  flex-shrink: 0;
-}
-
-.error-text {
-  flex: 1;
-}
-
-.error-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #991b1b;
-  margin: 0 0 0.25rem 0;
-}
-
-.error-message {
-  font-size: 0.875rem;
-  color: #7f1d1d;
-  margin: 0;
-}
-
-.btn-outline {
-  @apply inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50;
-}
-
-.btn-sm {
-  @apply px-3 py-1.5 text-sm;
-}
-
-/* Loading spinner */
-.loading-spinner {
-  @apply animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
-}
-</style>

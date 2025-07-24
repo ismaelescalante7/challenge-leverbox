@@ -194,14 +194,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<Emits>()
 
-// Composables
 const { formatDate } = useDateUtils()
 const { getStatusCardClasses } = useStatusColors()
 
-// Local state
 const showAll = ref(false)
 
-// Computed
 const displayTasks = computed(() => {
   console.log(`🔍 TaskList(${props.title}) displayTasks - showing ${showAll.value ? props.tasks.length : Math.min(props.limit, props.tasks.length)} of ${props.tasks.length} tasks`)
   return showAll.value ? props.tasks : props.tasks.slice(0, props.limit)
@@ -217,7 +214,6 @@ const emptyIcon = computed(() => {
   return icons[props.variant] || icons.default
 })
 
-// Methods
 const toggleShowAll = (): void => {
   console.log(`🔍 TaskList(${props.title}) toggleShowAll - showAll:`, !showAll.value)
   showAll.value = !showAll.value
@@ -226,12 +222,10 @@ const toggleShowAll = (): void => {
 const taskItemClasses = (task: Task): string => {
   const baseClasses = 'flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer'
   
-  // ✅ CORREGIDO: Usar taskHelpers.isOverdue
   if (taskHelpers.isOverdue(task)) {
     return `${baseClasses} ${getStatusCardClasses('overdue')}`
   }
   
-  // Usar el sistema de colores consistente
   return `${baseClasses} ${getStatusCardClasses(props.variant)}`
 }
 </script>

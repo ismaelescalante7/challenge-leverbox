@@ -84,22 +84,6 @@
               </span>
             </div>
           </div>
-          
-          <!-- Error State -->
-          <div v-if="error" class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div class="flex items-center space-x-2">
-              <ExclamationTriangleIcon class="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p class="text-sm text-red-700">
-                {{ error }}
-              </p>
-            </div>
-            <button 
-              @click="$emit('retry')"
-              class="mt-3 w-full btn-primary btn-sm"
-            >
-              Try Again
-            </button>
-          </div>
         </div>
       </div>
     </div>

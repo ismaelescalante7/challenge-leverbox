@@ -71,25 +71,6 @@
     
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4">
-      <!-- Global Error Banner -->
-      <div 
-        v-if="tasksStore.error" 
-        class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <ExclamationTriangleIcon class="w-5 h-5 text-red-500" />
-            <p class="text-sm text-red-700">{{ tasksStore.error }}</p>
-          </div>
-          <button
-            @click="tasksStore.clearError"
-            class="text-red-500 hover:text-red-700"
-          >
-            <XMarkIcon class="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-      
       <!-- Router View -->
       <router-view v-slot="{ Component }">
         <Transition name="fade" mode="out-in">

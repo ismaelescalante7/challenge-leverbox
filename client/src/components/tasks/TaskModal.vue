@@ -268,10 +268,14 @@ const isFormValid = computed(() => {
   return form.value.title.trim().length > 0 && !hasAnyErrors.value
 })
 
-// 🎯 ERROR HANDLING COMPUTED
 const globalError = computed(() => {
   console.log('🔍 TaskModal globalError computed:', props.error)
   return props.error
+})
+
+// ✅ NUEVO: Solo mostrar errores de validación EN EL MODAL
+const showModalError = computed(() => {
+  return globalError.value?.type !== 'validation'
 })
 
 const validationErrors = computed(() => {
@@ -279,6 +283,7 @@ const validationErrors = computed(() => {
   console.log('🔍 TaskModal validationErrors computed:', errors)
   return errors
 })
+
 
 // Errores que no están mapeados a campos específicos
 const unmappedErrors = computed(() => {

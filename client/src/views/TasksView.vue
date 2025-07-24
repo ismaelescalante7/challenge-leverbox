@@ -1,19 +1,5 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- 🔍 DEBUG Panel (temporal) -->
-    <div v-if="debugMode" class="debug-panel mb-6">
-      <h4>🔍 DEBUG INFO:</h4>
-      <p><strong>Store loading:</strong> {{ loading }}</p>
-      <p><strong>Store error:</strong> {{ error ? 'YES' : 'NO' }}</p>
-      <p><strong>Error type:</strong> {{ error?.type || 'none' }}</p>
-      <p><strong>Modal open:</strong> {{ showTaskModal }}</p>
-      <p><strong>Selected task:</strong> {{ selectedTask?.id || 'none' }}</p>
-      <details v-if="error">
-        <summary>Full Error Object</summary>
-        <pre>{{ JSON.stringify(error, null, 2) }}</pre>
-      </details>
-      <button @click="debugMode = false" class="btn-debug">Hide Debug</button>
-    </div>
 
     <!-- Header con estadísticas -->
     <TasksHeader
@@ -25,36 +11,6 @@
       @create="openCreateModal"
       @refresh="refreshTasks"
     />
-
-    <!-- Global Error Alert (only when modal is closed) -->
-    <div v-if="error && !showTaskModal" class="error-alert mb-6">
-      <div class="error-content">
-        <ExclamationTriangleIcon class="error-icon" />
-        <div class="error-text">
-          <h3 class="error-title">
-            {{ getErrorTitle(error.type) }}
-          </h3>
-          <p class="error-message">
-            {{ error.message }}
-          </p>
-          <div v-if="error.type === 'network'" class="error-actions">
-            <button
-              @click="retryOperation"
-              class="retry-btn"
-              :disabled="loading"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-        <button
-          @click="tasksStore.clearError"
-          class="error-close"
-        >
-          <XMarkIcon class="w-4 h-4" />
-        </button>
-      </div>
-    </div>
 
     <!-- Filtros -->
     <TasksFilters
@@ -205,20 +161,6 @@ const deleteModalMessage = computed(() => {
   }
   return 'Are you sure you want to delete this task? This action cannot be undone.'
 })
-
-// Error helper
-const getErrorTitle = (errorType: string): string => {
-  switch (errorType) {
-    case 'validation':
-      return 'Validation Error'
-    case 'network':
-      return 'Connection Error'
-    case 'server':
-      return 'Server Error'
-    default:
-      return 'Error'
-  }
-}
 
 // Methods
 const refreshTasks = async (): Promise<void> => {
