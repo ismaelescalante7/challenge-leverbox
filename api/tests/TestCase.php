@@ -2,38 +2,52 @@
 
 namespace Tests;
 
-use App\Models\Role;
-use App\Models\User;
-use Database\Seeders\PermissionSeeder;
-use Illuminate\Database\Events\MigrationsEnded;
-use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Event;
 
 abstract class TestCase extends BaseTestCase
 {
-	use CreatesApplication, LazilyRefreshDatabase;
+    use CreatesApplication;
 
-	protected function authUser()
-	{
-		$user = $this->superUser();
-		$this->be($user);
+    /**
+     * Setup the test environment.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // ✅ Asegurar que estamos en entorno testing
+        $this->app['env'] = 'testing';
+        
+        // Configuración básica sin Vite
+        $this->withoutVite();
+    }
 
-		return $user;
-	}
+    /**
+     * Seed database with specific seeder in testing environment.
+     */
+    protected function seedWithClass(string $seederClass): void
+    {
+        $this->artisan('db:seed', [
+            '--class' => $seederClass,
+            '--env' => 'testing'
+        ]);
+    }
 
-	protected function superUser()
-	{
-		$user = User::factory()->create();
-		$user->assignRole(Role::ROLE_SUPER_ADMIN);
-		return $user;
-	}
+    /**
+     * Fresh migrate for testing.
+     */
+    protected function freshMigrate(): void
+    {
+        $this->artisan('migrate:fresh', [
+            '--env' => 'testing'
+        ]);
+    }
 
-	protected function seedPermissions()
-	{
-		Event::listen(MigrationsEnded::class, function () {
-			$this->artisan('db:seed', ['--class' => PermissionSeeder::class]);
-		});
-	}
+    /**
+     * Assert we're in testing environment.
+     */
+    protected function assertTestingEnvironment(): void
+    {
+        $this->assertEquals('testing', $this->app->environment());
+    }
 }

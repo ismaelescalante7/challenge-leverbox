@@ -23,46 +23,4 @@ class Priority extends Model
     protected $casts = [
         'name' => 'string',
     ];
-
-    /**
-     * Get all tasks for this priority.
-     */
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class);
-    }
-
-    /**
-     * Get available priority options.
-     */
-    public static function getAvailablePriorities(): array
-    {
-        return ['LOW', 'MEDIUM', 'HIGH'];
-    }
-
-    /**
-     * Get priority color for UI.
-     */
-    public function getColorAttribute(): string
-    {
-        return match($this->name) {
-            'LOW' => '#10B981',      // green
-            'MEDIUM' => '#F59E0B',   // amber
-            'HIGH' => '#EF4444',     // red
-            default => '#6B7280',    // gray
-        };
-    }
-
-    /**
-     * Get priority label for display.
-     */
-    public function getLabelAttribute(): string
-    {
-        return match($this->name) {
-            'LOW' => 'Baja',
-            'MEDIUM' => 'Media',
-            'HIGH' => 'Alta',
-            default => $this->name,
-        };
-    }
 }

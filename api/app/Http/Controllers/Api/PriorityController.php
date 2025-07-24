@@ -16,9 +16,7 @@ class PriorityController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $priorities = Priority::with(['tasks' => function ($query) {
-                $query->select('id', 'priority_id', 'status');
-            }])->get();
+            $priorities = Priority::all();
 
             return response()->json(
                 $priorities,

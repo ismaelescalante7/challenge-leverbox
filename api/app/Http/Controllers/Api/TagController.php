@@ -15,7 +15,7 @@ class TagController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $tags = Tag::withCount('tasks')->get();
+            $tags = Tag::all();
 
             return response()->json(
                 $tags,
