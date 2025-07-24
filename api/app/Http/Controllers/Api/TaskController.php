@@ -39,10 +39,10 @@ class TaskController extends Controller
             return TaskResource::collection($tasks);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => "Error server"], 500);
+            return response()->json(['error' => 'Error retrieving tasks: ' . $e->getMessage()], 500);
         }
     }
-
+    
     /**
      * Store a newly created task
      * POST /api/tasks
@@ -63,7 +63,7 @@ class TaskController extends Controller
             return response()->json(TaskResource::make($task),201);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => "Error server"], 500);
+            return response()->json(['error' => 'Error show task: ' . $e->getMessage()], 500);
         }
     }
 
@@ -79,7 +79,7 @@ class TaskController extends Controller
             return response()->json(TaskResource::make($updatedTask), 200);
         
         } catch (\Exception $e) {
-            return response()->json(['message' => "Error server"], 500);
+            return response()->json(['error' => 'Error update task: ' . $e->getMessage()], 500);
         }
     }
 
@@ -95,7 +95,7 @@ class TaskController extends Controller
             return response()->json(null, 200);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => "Error server"], 500);
+            return response()->json(['error' => 'Error deleting task: ' . $e->getMessage()], 500);
         }
     }
 
@@ -108,46 +108,13 @@ class TaskController extends Controller
         try {
             $updatedTask = $this->taskService->updateTaskStatus($task, $request->status);
 
-            return $this->updatedResponse(
-                new TaskResource($updatedTask)
-            );
-
-        } catch (\InvalidArgumentException $e) {
-            return $this->validationErrorResponse(
-                ['status' => [$e->getMessage()]],
-                'Invalid status provided'
+            return response()->json(
+                TaskResource::make($updatedTask),
+                200
             );
 
         } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error updating task status',
-                $e->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Search tasks
-     * GET /api/tasks/search
-     */
-    public function search(Request $request): JsonResponse
-    {
-        $request->validate([
-            'q' => 'required|string|min:2|max:255'
-        ]);
-
-        try {
-            $tasks = $this->taskService->searchTasks($request->q);
-
-            return $this->successResponse(
-                TaskResource::collection($tasks)
-            );
-
-        } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error searching tasks',
-                $e->getMessage()
-            );
+            return response()->json(['error' => 'Error updating task status: ' . $e->getMessage()], 500);
         }
     }
 

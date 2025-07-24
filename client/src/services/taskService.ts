@@ -361,53 +361,149 @@ class TaskService {
   }
 }
 
-// 🔧 Helper functions ACTUALIZADOS para el modal
+// 🔧 Helper functions ACTUALIZADOS para la estructura real del API
 export const taskHelpers = {
-  // Status helpers - SIMPLIFICADOS para el modal
+  // Status helpers - CORREGIDOS para StatusObject
   getStatusValue: (task: Task): string => {
-    // Asumimos que task.status es un string simple
-    return task.status || 'pending'
+    console.log('🔍 taskHelper getStatusValue - task.status:', task.status)
+    
+    // Si es un objeto StatusObject
+    if (task.status && typeof task.status === 'object' && 'value' in task.status) {
+      console.log('🔍 taskHelper getStatusValue - returning object value:', task.status.value)
+      return task.status.value
+    }
+    
+    // Si es un string directo (fallback)
+    if (typeof task.status === 'string') {
+      console.log('🔍 taskHelper getStatusValue - returning string:', task.status)
+      return task.status
+    }
+    
+    // Default
+    console.log('🔍 taskHelper getStatusValue - returning default: pending')
+    return 'pending'
   },
   
   getStatusLabel: (task: Task): string => {
-    const status = task.status || 'pending'
-    return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
+    // Si es un objeto StatusObject
+    if (task.status && typeof task.status === 'object' && 'label' in task.status) {
+      return task.status.label
+    }
+    
+    // Si es un string, formatear
+    if (typeof task.status === 'string') {
+      return task.status.charAt(0).toUpperCase() + task.status.slice(1).replace('_', ' ')
+    }
+    
+    return 'Pending'
   },
 
-  // Priority helpers - SIMPLIFICADOS
+  getStatusColor: (task: Task): string | undefined => {
+    // Si es un objeto StatusObject con color
+    if (task.status && typeof task.status === 'object' && 'color' in task.status) {
+      return task.status.color
+    }
+    
+    return undefined
+  },
+
+  // Priority helpers - CORREGIDOS para Priority object
   getPriorityName: (task: Task): string => {
     if (!task.priority) return 'Normal'
-    if (typeof task.priority === 'string') return task.priority
-    return task.priority?.name || task.priority?.label || 'Normal'
+    
+    // Si es un objeto Priority
+    if (typeof task.priority === 'object' && 'name' in task.priority) {
+      return task.priority.name || task.priority.label || 'Normal'
+    }
+    
+    // Si es un string (fallback)
+    if (typeof task.priority === 'string') {
+      return task.priority
+    }
+    
+    return 'Normal'
   },
   
   getPriorityLabel: (task: Task): string => {
     if (!task.priority) return 'Normal'
-    if (typeof task.priority === 'string') return task.priority
-    return task.priority?.label || task.priority?.name || 'Normal'
+    
+    // Si es un objeto Priority
+    if (typeof task.priority === 'object' && 'label' in task.priority) {
+      return task.priority.label || task.priority.name || 'Normal'
+    }
+    
+    // Si es un string (fallback)
+    if (typeof task.priority === 'string') {
+      return task.priority
+    }
+    
+    return 'Normal'
+  },
+  
+  getPriorityColor: (task: Task): string | undefined => {
+    if (!task.priority || typeof task.priority !== 'object') return undefined
+    return task.priority.color
   },
 
-  // Date helpers - SIMPLIFICADOS
+  // Date helpers - CORREGIDOS para TaskDates object
   isOverdue: (task: Task): boolean => {
-    if (!task.due_date) return false
-    return new Date(task.due_date) < new Date()
+    console.log('🔍 taskHelper isOverdue - task.dates:', task.dates)
+    
+    // Si tiene estructura dates con is_overdue
+    if (task.dates && typeof task.dates === 'object' && 'is_overdue' in task.dates) {
+      console.log('🔍 taskHelper isOverdue - using dates.is_overdue:', task.dates.is_overdue)
+      return task.dates.is_overdue || false
+    }
+    
+    // Fallback: calcular manualmente si tiene due_date
+    if (task.dates?.due_date) {
+      const isOverdue = new Date(task.dates.due_date) < new Date()
+      console.log('🔍 taskHelper isOverdue - calculated:', isOverdue)
+      return isOverdue
+    }
+    
+    console.log('🔍 taskHelper isOverdue - no due date, returning false')
+    return false
+  },
+  
+  getDaysUntilDue: (task: Task): number | null => {
+    if (task.dates && 'days_until_due' in task.dates) {
+      return task.dates.days_until_due
+    }
+    return null
   },
   
   getFormattedDueDate: (task: Task): string | null => {
-    return task.due_date || null
+    if (task.dates?.formatted_due_date) {
+      return task.dates.formatted_due_date
+    }
+    if (task.dates?.due_date) {
+      return task.dates.due_date
+    }
+    return null
   },
   
   getCreatedAt: (task: Task): string => {
-    return task.created_at || ''
+    return task.dates?.created_at || ''
   },
   
   getUpdatedAt: (task: Task): string => {
-    return task.updated_at || ''
+    return task.dates?.updated_at || ''
   },
 
-  // Meta helpers - SIMPLIFICADOS
+  // Meta helpers - CORREGIDOS para TaskMeta object
   canEdit: (task: Task): boolean => {
-    return true // Por defecto todas las tareas se pueden editar
+    if (task.meta && 'can_edit' in task.meta) {
+      return task.meta.can_edit !== false
+    }
+    return true // Por defecto se puede editar
+  },
+  
+  getUrgencyLevel: (task: Task): string => {
+    if (task.meta && 'urgency_level' in task.meta) {
+      return task.meta.urgency_level
+    }
+    return 'normal'
   },
 
   // Helper para validar estructura de tarea

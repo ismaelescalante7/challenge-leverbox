@@ -5,14 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
 use App\Http\Resources\Tag\TagResource;
-use App\Traits\ApiResponseTrait;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class TagController extends Controller
 {
-    use ApiResponseTrait;
-
     /**
      * Display a listing of tags.
      */
@@ -21,15 +17,12 @@ class TagController extends Controller
         try {
             $tags = Tag::withCount('tasks')->get();
 
-            return $this->successResponse(
-                TagResource::collection($tags)
+            return response()->json(
+                $tags,
+                200
             );
-
         } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error retrieving tags',
-                $e->getMessage()
-            );
+            return response()->json(['error' => 'Error retrieving tags: ' . $e->getMessage()], 500);
         }
     }
 }

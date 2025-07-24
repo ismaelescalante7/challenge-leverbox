@@ -194,19 +194,46 @@ export const useTasksStore = defineStore('tasks', () => {
   // Actions para Tasks
   const fetchTasks = async (page?: number): Promise<void> => {
     console.log('🔍 Store fetchTasks called with page:', page)
+    console.log('🔍 Store current filters state:', filters.value)
     loading.value = true
     error.value = null
     
     try {
-      // Crear filtros limpios
+      // ✅ CREAR FILTROS COMPLETOS basados en el estado actual
       const cleanFilters: Record<string, any> = {
+        // Paginación y orden
         page: page || filters.value.page || 1,
         per_page: filters.value.per_page || 10,
         sort_by: filters.value.sort_by || 'created_at',
         sort_direction: filters.value.sort_direction || 'desc'
       }
       
-      console.log('🔍 Store fetchTasks - Clean filters:', cleanFilters)
+      // ✅ AGREGAR FILTROS OPCIONALES si tienen valor
+      if (filters.value.search && filters.value.search.trim()) {
+        cleanFilters.search = filters.value.search.trim()
+      }
+      
+      if (filters.value.status && filters.value.status !== '') {
+        cleanFilters.status = filters.value.status
+      }
+      
+      if (filters.value.priority_id && filters.value.priority_id !== '') {
+        cleanFilters.priority_id = filters.value.priority_id
+      }
+      
+      if (filters.value.tag_ids && Array.isArray(filters.value.tag_ids) && filters.value.tag_ids.length > 0) {
+        cleanFilters.tag_ids = [...filters.value.tag_ids]
+      }
+      
+      if (filters.value.overdue === true) {
+        cleanFilters.overdue = true
+      }
+      
+      // ✅ LOG para debug
+      console.log('🔍 Store fetchTasks - Complete filters being sent:', cleanFilters)
+      console.log('🔍 Store fetchTasks - Comparison:')
+      console.log('   - Original filters.value:', filters.value)
+      console.log('   - Clean filters to API:', cleanFilters)
       
       const response: TasksApiResponse = await taskService.getTasks(cleanFilters)
       console.log('🔍 Store fetchTasks - Response:', response)
