@@ -49,23 +49,6 @@
             </li>
           </ol>
         </nav>
-
-        <div class="flex space-x-3">
-          <button
-            @click="editTask"
-            class="btn-outline"
-          >
-            <PencilIcon class="w-4 h-4 mr-2" />
-            Edit
-          </button>
-          <button
-            @click="confirmDelete"
-            class="btn-danger"
-          >
-            <TrashIcon class="w-4 h-4 mr-2" />
-            Delete
-          </button>
-        </div>
       </div>
 
       <!-- Task Info Card -->
@@ -143,7 +126,7 @@
             <div>
               <h3 class="text-sm font-medium text-gray-900 mb-2">Status</h3>
               <p class="text-gray-900 capitalize">{{ taskHelpers.getStatusLabel(task) }}</p>
-              <div class="flex space-x-2 mt-2">
+              <div class="flex flex-wrap gap-2 mt-2">
                 <button
                   v-for="status in availableStatuses"
                   :key="status.value"
@@ -306,14 +289,6 @@ const availableStatuses = [
   { value: 'completed', label: 'Completed' }
 ]
 
-// Methods
-const editTask = (): void => {
-  showEditModal.value = true
-}
-
-const confirmDelete = (): void => {
-  showDeleteModal.value = true
-}
 
 const closeEditModal = (): void => {
   showEditModal.value = false
