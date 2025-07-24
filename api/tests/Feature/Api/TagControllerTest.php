@@ -16,7 +16,6 @@ class TagControllerTest extends TestCase
     {
         parent::setUp();
         
-        // ✅ Verificar que estamos en entorno testing
         $this->assertTestingEnvironment();
     }
 
@@ -56,7 +55,6 @@ class TagControllerTest extends TestCase
                 'name' => 'DEV'
             ]);
 
-        // Verificar que tiene timestamps
         $responseData = $response->json();
         $this->assertArrayHasKey('created_at', $responseData[0]);
         $this->assertArrayHasKey('updated_at', $responseData[0]);
@@ -75,7 +73,6 @@ class TagControllerTest extends TestCase
     /** @test */
     public function it_orders_tags_consistently(): void
     {
-        // Crear en orden aleatorio
         Tag::create(['name' => 'HR']);
         Tag::create(['name' => 'DEV']);
         Tag::create(['name' => 'QA']);
@@ -86,7 +83,6 @@ class TagControllerTest extends TestCase
         
         $tags = $response->json();
         
-        // Verificar que hay 3 tags
         $this->assertCount(3, $tags);
         
         // Verificar que todas tienen la estructura correcta
@@ -99,7 +95,7 @@ class TagControllerTest extends TestCase
             $this->assertIsString($tag['name']);
         }
     }
-    
+
     /** @test */
     public function it_returns_tags_with_valid_names(): void
     {
@@ -113,7 +109,6 @@ class TagControllerTest extends TestCase
         
         $tags = $response->json();
         
-        // Verificar que los nombres están correctos
         $names = collect($tags)->pluck('name')->toArray();
         
         $this->assertContains('DEV', $names);
@@ -130,7 +125,6 @@ class TagControllerTest extends TestCase
     /** @test */
     public function it_can_seed_tags_safely(): void
     {
-        // ✅ Test específico para verificar que el seeding funciona
         $this->assertEquals(0, Tag::count());
         
         $this->seedWithClass('TagSeeder');
@@ -144,7 +138,6 @@ class TagControllerTest extends TestCase
     /** @test */
     public function it_maintains_testing_environment(): void
     {
-        // ✅ Verificar que seguimos en testing
         $this->assertEquals('testing', app()->environment());
     }
 
@@ -158,7 +151,6 @@ class TagControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         
-        // Verificar que es JSON válido
         $content = $response->getContent();
         $decodedContent = json_decode($content, true);
         

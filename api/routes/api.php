@@ -24,9 +24,6 @@ Route::prefix('tasks')->name('tasks.')->group(function () {
     // Individual task status update
     Route::patch('{task}/status', [TaskController::class, 'updateStatus'])->name('update-status');
     
-    Route::patch('bulk-update', [TaskController::class, 'bulkUpdate'])->name('bulk-update');
-    Route::delete('bulk-delete', [TaskController::class, 'bulkDelete'])->name('bulk-delete');
-    
     // Standard CRUD operations
     Route::apiResource('/', TaskController::class)
          ->parameters(['' => 'task'])

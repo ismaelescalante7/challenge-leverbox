@@ -11,7 +11,6 @@ use App\Models\Task;
 use App\Services\TaskService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
 {
@@ -118,71 +117,4 @@ class TaskController extends Controller
         }
     }
 
-    /**
-     * Get tasks by status
-     * GET /api/tasks/status/{status}
-     */
-    public function byStatus(string $status): JsonResponse
-    {
-        try {
-            $tasks = $this->taskService->getTasksByStatus($status);
-
-            return $this->successResponse(
-                TaskResource::collection($tasks),
-                "Tasks with status '{$status}' retrieved successfully"
-            );
-
-        } catch (\InvalidArgumentException $e) {
-            return $this->validationErrorResponse(
-                ['status' => [$e->getMessage()]],
-                'Invalid status provided'
-            );
-
-        } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error retrieving tasks by status',
-                $e->getMessage()
-            );
-        }
-    }
-
-
-    /**
-     * Bulk update tasks
-     * PATCH /api/tasks/bulk
-     */
-    public function bulkUpdate(Request $request): JsonResponse
-    {
-        $request->validate([
-            'task_ids' => 'required|array|min:1',
-            'task_ids.*' => 'integer|exists:tasks,id',
-            'status' => 'sometimes|in:pending,in_progress,completed',
-            'priority_id' => 'sometimes|exists:priorities,id',
-        ]);
-
-        try {
-            $updatedTasks = [];
-            $taskIds = $request->task_ids;
-            
-            foreach ($taskIds as $taskId) {
-                $task = $this->taskService->findTaskOrFail($taskId);
-                $updateData = $request->only(['status', 'priority_id']);
-                
-                if (!empty($updateData)) {
-                    $updatedTask = $this->taskService->updateTask($task, $updateData);
-                    $updatedTasks[] = $updatedTask;
-                }
-            }
-
-            return $this->updatedResponse(
-                TaskResource::collection(collect($updatedTasks))
-            );
-
-        } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error bulk updating tasks',
-                $e->getMessage()
-            );
-        }
-    }
 }

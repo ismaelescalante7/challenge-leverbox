@@ -22,7 +22,6 @@ class PriorityControllerTest extends TestCase
     /** @test */
     public function it_can_get_all_priorities(): void
     {
-        // ✅ Usar método del trait que especifica --env=testing
         $this->seedBasicData();
 
         $response = $this->getJson('/api/priorities');
@@ -41,7 +40,6 @@ class PriorityControllerTest extends TestCase
     /** @test */
     public function it_returns_correct_priority_format(): void
     {
-        // ✅ Crear directamente para control total
         Priority::create(['name' => 'HIGH']);
 
         $response = $this->getJson('/api/priorities');
@@ -55,7 +53,6 @@ class PriorityControllerTest extends TestCase
     /** @test */
     public function it_can_seed_priorities_safely(): void
     {
-        // ✅ Test específico para verificar que el seeding funciona
         $this->assertEquals(0, Priority::count());
         
         $this->seedBasicData();
