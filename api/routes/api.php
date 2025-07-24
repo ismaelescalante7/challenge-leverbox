@@ -1,36 +1,24 @@
-
 <?php
-// routes/api.php (Laravel 12)
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\PriorityController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\Api\TaskController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - Laravel 12
+| API Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
 */
 
-// Health check endpoint
-Route::get('health', fn() => response()->json([
-    'success' => true,
-    'message' => 'API is running',
-    'timestamp' => now()->toISOString(),
-    'version' => '1.0.0',
-    'laravel' => '12.x'
-]));
+Route::middleware('auth:sanctum')->group(function () {
+});
 
-// User endpoint with sanctum
-Route::middleware('auth:sanctum')->get('/user', fn(Request $request) => $request->user());
-
-/*
-|--------------------------------------------------------------------------
-| Task Management Routes
-|--------------------------------------------------------------------------
-*/
 Route::prefix('tasks')->name('tasks.')->group(function () {
     Route::get('search', [TaskController::class, 'search'])->name('search');
     // Individual task status update
@@ -71,30 +59,12 @@ Route::apiResource('tags', TagController::class)
          'index' => 'tags.index'
      ]);
 
-/*
-|--------------------------------------------------------------------------
-| System Information Routes
-|--------------------------------------------------------------------------
-*/
-Route::prefix('system')->group(function () {
-    Route::get('info', fn() => response()->json([
-        'success' => true,
-        'data' => [
-            'app_name' => config('app.name'),
-            'app_version' => '1.0.0',
-            'laravel_version' => app()->version(),
-            'php_version' => PHP_VERSION,
-            'timezone' => config('app.timezone'),
-            'environment' => app()->environment(),
-        ]
-    ]));
-    
-    Route::get('routes', fn() => response()->json([
-        'success' => true,
-        'data' => [
-            'tasks' => route('tasks.index'),
-            'priorities' => route('priorities.index'),
-            'tags' => route('tags.index'),
-        ]
-    ]));
-});
+
+// Health check endpoint
+Route::get('health', fn() => response()->json([
+    'success' => true,
+    'message' => 'API is running',
+    'timestamp' => now()->toISOString(),
+    'version' => '1.0.0',
+    'laravel' => '12.x'
+]));

@@ -1,5 +1,4 @@
 <?php
-// app/Models/Task.php (Laravel 12)
 
 namespace App\Models;
 
@@ -7,11 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Carbon\Carbon;
 
-#[ObservedBy([\App\Observers\TaskObserver::class])]
 class Task extends Model
 {
     use HasFactory;
@@ -28,15 +25,12 @@ class Task extends Model
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      */
-    protected function casts(): array
-    {
-        return [
-            'due_date' => 'date',
-            'status' => 'string',
-        ];
-    }
+    protected $casts = [
+        'due_date' => 'date',
+        'status' => 'string',
+    ];
 
     /**
      * The relationships that should always be loaded.
@@ -60,49 +54,34 @@ class Task extends Model
     }
 
     /**
-     * Get available status options.
+     * Available status options.
      */
     public static function getAvailableStatuses(): array
     {
         return ['pending', 'in_progress', 'completed'];
     }
 
-    /**
-     * Scope to filter by status.
-     */
     public function scopeByStatus($query, string $status)
     {
         return $query->where('status', $status);
     }
 
-    /**
-     * Scope to filter by due date.
-     */
     public function scopeByDueDate($query, string $date)
     {
         return $query->whereDate('due_date', $date);
     }
 
-    /**
-     * Scope to get overdue tasks.
-     */
     public function scopeOverdue($query)
     {
         return $query->where('due_date', '<', Carbon::today())
-                    ->where('status', '!=', 'completed');
+                     ->where('status', '!=', 'completed');
     }
 
-    /**
-     * Scope to filter by priority.
-     */
     public function scopeByPriority($query, int $priorityId)
     {
         return $query->where('priority_id', $priorityId);
     }
 
-    /**
-     * Scope to filter by tags.
-     */
     public function scopeByTags($query, array $tagIds)
     {
         return $query->whereHas('tags', function ($q) use ($tagIds) {
@@ -110,99 +89,76 @@ class Task extends Model
         });
     }
 
-    /**
-     * Scope for pending tasks.
-     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
 
-    /**
-     * Scope for in progress tasks.
-     */
     public function scopeInProgress($query)
     {
         return $query->where('status', 'in_progress');
     }
 
-    /**
-     * Scope for completed tasks.
-     */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
     }
 
     /**
-     * Check if the task is overdue.
+     * Computed: is_overdue
      */
-    protected function isOverdue(): Attribute
+    public function getIsOverdueAttribute(): bool
     {
-        return Attribute::make(
-            get: function (): bool {
-                if (!$this->due_date) {
-                    return false;
-                }
-                
-                return $this->due_date->isPast() && $this->status !== 'completed';
-            }
-        );
+        if (!$this->due_date) {
+            return false;
+        }
+
+        return $this->due_date->isPast() && $this->status !== 'completed';
     }
 
     /**
-     * Get status label for display.
+     * Computed: status_label
      */
-    protected function statusLabel(): Attribute
+    public function getStatusLabelAttribute(): string
     {
-        return Attribute::make(
-            get: fn(): string => match($this->status) {
-                'pending' => 'Pendiente',
-                'in_progress' => 'En Progreso',
-                'completed' => 'Completada',
-                default => $this->status,
-            }
-        );
+        return match($this->status) {
+            'pending' => 'Pendiente',
+            'in_progress' => 'En Progreso',
+            'completed' => 'Completada',
+            default => $this->status,
+        };
     }
 
     /**
-     * Get status color for UI.
+     * Computed: status_color
      */
-    protected function statusColor(): Attribute
+    public function getStatusColorAttribute(): string
     {
-        return Attribute::make(
-            get: fn(): string => match($this->status) {
-                'pending' => '#6B7280',      // gray
-                'in_progress' => '#F59E0B',  // amber
-                'completed' => '#10B981',    // green
-                default => '#6B7280',        // gray
-            }
-        );
+        return match($this->status) {
+            'pending' => '#6B7280',
+            'in_progress' => '#F59E0B',
+            'completed' => '#10B981',
+            default => '#6B7280',
+        };
     }
 
     /**
-     * Get days until due date.
+     * Computed: days_until_due
      */
-    protected function daysUntilDue(): Attribute
+    public function getDaysUntilDueAttribute(): ?int
     {
-        return Attribute::make(
-            get: function (): ?int {
-                if (!$this->due_date) {
-                    return null;
-                }
+        if (!$this->due_date) {
+            return null;
+        }
 
-                return Carbon::today()->diffInDays($this->due_date, false);
-            }
-        );
+        return Carbon::today()->diffInDays($this->due_date, false);
     }
 
     /**
-     * Get formatted due date.
+     * Computed: formatted_due_date
      */
-    protected function formattedDueDate(): Attribute
+    public function getFormattedDueDateAttribute(): ?string
     {
-        return Attribute::make(
-            get: fn(): ?string => $this->due_date?->format('d/m/Y')
-        );
+        return $this->due_date ? $this->due_date->format('d/m/Y') : null;
     }
 }

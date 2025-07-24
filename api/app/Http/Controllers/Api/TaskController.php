@@ -10,17 +10,18 @@ use App\Http\Resources\Task\TaskResource;
 use App\Http\Resources\Task\TaskCollection;
 use App\Models\Task;
 use App\Services\TaskService;
-use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
 {
-    use ApiResponseTrait;
 
     public function __construct(
         protected TaskService $taskService
     ) {}
+    
 
     /**
      * Display a listing of tasks
@@ -37,15 +38,14 @@ class TaskController extends Controller
 
             $tasks = $this->taskService->getPaginatedTasks($filters, $perPage);
             
-            return $this->collectionResponse(
-                new TaskCollection($tasks)
-            );
+            return TaskResource::collection($tasks);
 
-        } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error retrieving tasks',
-                $e->getMessage()
-            );
+        } catch (ValidationException $e) {
+            // Laravel manejará esto automáticamente, pero podemos interceptarlo si necesitamos custom logic
+            throw $e;
+            
+        }  catch (\Exception $e) {
+            return response()->json(['message' => "Error server"], 500);
         }
     }
 
@@ -53,22 +53,10 @@ class TaskController extends Controller
      * Store a newly created task
      * POST /api/tasks
      */
-    public function store(StoreTaskRequest $request): JsonResponse
+    public function store(StoreTaskRequest $request)
     {
-        try {
-            $task = $this->taskService->createTask($request->validated());
-
-            return $this->createdResponse(
-                new TaskResource($task),
-                'Task created successfully'
-            );
-
-        } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error creating task',
-                $e->getMessage()
-            );
-        }
+        $task = $this->taskService->createTask($request->validated());
+        return response()->json(TaskResource::make($task), 201);
     }
 
     /**
@@ -78,15 +66,10 @@ class TaskController extends Controller
     public function show(Task $task): JsonResponse
     {
         try {
-            return $this->resourceResponse(
-                new TaskResource($task)
-            );
+            return response()->json(TaskResource::make($task));
 
         } catch (\Exception $e) {
-            return $this->serverErrorResponse(
-                'Error retrieving task',
-                $e->getMessage()
-            );
+            return response()->json(['message' => "Error server"], 500);
         }
     }
 
@@ -103,7 +86,7 @@ class TaskController extends Controller
                 new TaskResource($updatedTask),
                 'Task updated successfully'
             );
-
+        
         } catch (\Exception $e) {
             return $this->serverErrorResponse(
                 'Error updating task',

@@ -69,18 +69,6 @@ class StoreTaskRequest extends FormRequest
     }
 
     /**
-     * Handle a failed validation attempt.
-     */
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'message' => 'Error de validación',
-            'errors' => $validator->errors()
-        ], 422));
-    }
-
-    /**
      * Prepare the data for validation.
      */
     protected function prepareForValidation(): void

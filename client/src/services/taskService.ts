@@ -29,13 +29,12 @@ class TaskService {
     })
 
     this.setupInterceptors()
-    console.log('🔧 TaskService initialized with:', baseURL)
   }
 
   private setupInterceptors(): void {
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
+       console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
         if (config.params) {
           console.log('📦 Query params:', config.params)
         }
@@ -226,7 +225,6 @@ class TaskService {
   async updateTaskStatus(id: number, status: TaskStatus): Promise<Task> {
     try {
       const response: AxiosResponse = await this.api.patch(`/tasks/${id}/status`, { status })
-      console.log(response)
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 updateTaskStatus failed:', error)

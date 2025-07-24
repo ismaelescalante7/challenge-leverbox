@@ -132,17 +132,13 @@ import { useTasksStore } from '@/stores/useTasksStore'
 import { useNotifications } from '@/composables/useNotifications'
 import AppLoading from '@/components/AppLoading.vue'
 
-// Store and composables
 const tasksStore = useTasksStore()
 const { showError, showSuccess } = useNotifications()
 
-// Local state
 const initError = ref<string | null>(null)
 const lastRefresh = ref<string>('')
 
-// Methods
 const initializeApp = async (): Promise<void> => {
-  console.log('🚀 Initializing app...')
   initError.value = null
   
   try {

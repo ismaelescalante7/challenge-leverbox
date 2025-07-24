@@ -1,0 +1,31 @@
+version: "3.9"
+name: "spa-prd"
+services:
+  api:
+    build:
+      args:
+        MODE: production
+    volumes:
+      - ./api/local.ini:/usr/local/etc/php/conf.d/local.ini
+    env_file:
+      - ./api/.env.prd
+
+  worker:
+    build:
+      args:
+        MODE: production
+    env_file:
+      - ./api/.env.prd
+
+  mysql:
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+
+  client:
+    build:
+      target: build-stage
+      args:
+        MODE: production

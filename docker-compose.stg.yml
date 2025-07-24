@@ -1,0 +1,31 @@
+version: "3.9"
+name: "spa-stg"
+services:
+  api:
+    build:
+      args:
+        MODE: staging
+    volumes:
+      - ./api/local.ini:/usr/local/etc/php/conf.d/local.ini
+    env_file:
+      - ./api/.env.stg
+
+  worker:
+    build:
+      args:
+        MODE: staging
+    env_file:
+      - ./api/.env.stg
+
+  mysql:
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+
+  client:
+    build:
+      target: build-stage
+      args:
+        MODE: staging

@@ -1,0 +1,52 @@
+version: "3.9"
+services:
+  webserver:
+    command: "nginx-debug -g 'daemon off;'"
+    volumes:
+      - ./api/storage/app/public:/var/www/public/storage/:ro
+
+  api:
+    build:
+      args:
+        MODE: development
+    volumes:
+      - ./api/:/var/www/
+      - /var/www/vendor
+    env_file:
+      - ./api/.env.dev
+
+  worker:
+    build:
+      args:
+        MODE: development
+    volumes:
+      - ./api/:/var/www/
+      - /var/www/vendor
+    env_file:
+      - ./api/.env.dev
+
+  mysql:
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+
+  client:
+    build:
+      target: serve-stage
+      args:
+        MODE: development
+    deploy:
+      resources:
+        reservations:
+          cpus: '3'
+          memory: '2G'
+
+    volumes:
+      - ./client/src/:/app/src/
+    environment:
+      - APP_URL=http://localhost:${WEBSERVER_CLIENT_PORT:-3000}
+      - VUE_APP_SERVER_URL=http://localhost:${WEBSERVER_API_PORT:-8000}
