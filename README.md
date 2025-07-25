@@ -43,7 +43,7 @@ cp api/.env.dev.example api/.env.dev
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 # Run migrations and seed database
-docker exec -it api php artisan migrate --seed
+docker-compose exec api php artisan migrate --seed
 ```
 
 ### Access URLs
