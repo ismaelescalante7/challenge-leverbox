@@ -13,11 +13,7 @@ class DatabaseSeeder extends Seeder
 	 */
 	public function run(): void
 	{
-		(new PermissionSeeder)->run();
-
-		$users = \App\Models\User::factory(100)->create();
-
-		User::whereKey($users->random(50)->modelKeys())->update(['status' => ActiveStatusEnum::INACTIVE]);
+		$users = \App\Models\User::factory(1)->create();
 
 		$this->call([
             PrioritySeeder::class,

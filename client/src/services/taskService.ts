@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '@/plugins/axios' // ✅ Usar el plugin configurado
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import type {
   Task,
@@ -16,25 +16,18 @@ class TaskService {
   private api: AxiosInstance
 
   constructor() {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    // ✅ Usar la instancia de axios ya configurada del plugin
+    this.api = axios
     
-    this.api = axios.create({
-      baseURL,
-      timeout: 15000,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-
-    this.setupInterceptors()
+    // ✅ Solo agregar interceptors específicos para debugging si es necesario
+    this.setupDebugInterceptors()
   }
 
-  private setupInterceptors(): void {
+  private setupDebugInterceptors(): void {
+    // ✅ Solo interceptors de debug, no reconfigurar auth
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`)
+        console.log(`🚀 TaskService ${config.method?.toUpperCase()} ${config.url}`)
         if (config.params) {
           console.log('📦 Query params:', config.params)
         }
@@ -44,19 +37,19 @@ class TaskService {
         return config
       },
       (error) => {
-        console.error('❌ Request Error:', error)
+        console.error('❌ TaskService Request Error:', error)
         return Promise.reject(error)
       }
     )
 
     this.api.interceptors.response.use(
       (response) => {
-        console.log(`✅ ${response.status} ${response.config.url}`)
+        console.log(`✅ TaskService ${response.status} ${response.config.url}`)
         console.log('📦 Response data:', response.data)
         return response
       },
       (error) => {
-        console.error('❌ API Error:', error)
+        console.error('❌ TaskService API Error:', error)
         console.error('❌ Error response:', error.response?.data)
         console.error('❌ Error status:', error.response?.status)
         return Promise.reject(error)
@@ -156,7 +149,7 @@ class TaskService {
       // Para GET /tasks, usar safeQueryParams
       const queryParams = this.safeQueryParams(filters)
       
-      const response: AxiosResponse<TasksApiResponse> = await this.api.get('/tasks', { 
+      const response: AxiosResponse<TasksApiResponse> = await this.api.get('api/tasks', { 
         params: queryParams 
       })
       
@@ -173,7 +166,7 @@ class TaskService {
    */
   async getTask(id: number): Promise<Task> {
     try {
-      const response: AxiosResponse = await this.api.get(`/tasks/${id}`)
+      const response: AxiosResponse = await this.api.get(`api/tasks/${id}`)
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 getTask failed:', error)
@@ -192,7 +185,7 @@ class TaskService {
       const cleanData = this.cleanBodyData(data)
       console.log('🔍 Sending clean data:', cleanData)
       
-      const response: AxiosResponse = await this.api.post('/tasks', cleanData)
+      const response: AxiosResponse = await this.api.post('api/tasks', cleanData)
       console.log('🔍 createTask response:', response.data)
       
       return response.data.data || response.data
@@ -221,7 +214,7 @@ class TaskService {
       const cleanData = this.cleanBodyData(data)
       console.log('🔍 Sending clean data:', cleanData)
       
-      const response: AxiosResponse = await this.api.patch(`/tasks/${id}`, cleanData)
+      const response: AxiosResponse = await this.api.patch(`api/tasks/${id}`, cleanData)
       console.log('🔍 updateTask response:', response.data)
       
       return response.data.data || response.data
@@ -238,7 +231,7 @@ class TaskService {
    */
   async deleteTask(id: number): Promise<void> {
     try {
-      await this.api.delete(`/tasks/${id}`)
+      await this.api.delete(`api/tasks/${id}`)
     } catch (error) {
       console.error('💥 deleteTask failed:', error)
       throw error
@@ -250,7 +243,7 @@ class TaskService {
    */
   async updateTaskStatus(id: number, status: TaskStatus): Promise<Task> {
     try {
-      const response: AxiosResponse = await this.api.patch(`/tasks/${id}/status`, { status })
+      const response: AxiosResponse = await this.api.patch(`api/tasks/${id}/status`, { status })
       return response.data.data || response.data
     } catch (error) {
       console.error('💥 updateTaskStatus failed:', error)
@@ -263,7 +256,7 @@ class TaskService {
    */
   async searchTasks(query: string): Promise<Task[]> {
     try {
-      const response: AxiosResponse = await this.api.get('/tasks/search', { 
+      const response: AxiosResponse = await this.api.get('api/tasks/search', { 
         params: { q: query } 
       })
       return response.data.data || response.data || []
@@ -283,7 +276,7 @@ class TaskService {
         ...updateData
       })
       
-      const response: AxiosResponse = await this.api.patch('/tasks/bulk', cleanData)
+      const response: AxiosResponse = await this.api.patch('api/tasks/bulk', cleanData)
       return response.data.data || response.data || []
     } catch (error) {
       console.error('💥 bulkUpdateTasks failed:', error)
@@ -310,7 +303,7 @@ class TaskService {
    */
   async getPriorities(): Promise<Priority[]> {
     try {
-      const response: AxiosResponse = await this.api.get('/priorities')
+      const response: AxiosResponse = await this.api.get('api/priorities')
       return response.data.data || response.data || []
     } catch (error) {
       console.error('💥 getPriorities failed:', error)
@@ -323,7 +316,7 @@ class TaskService {
    */
   async getTags(): Promise<Tag[]> {
     try {
-      const response: AxiosResponse = await this.api.get('/tags')
+      const response: AxiosResponse = await this.api.get('api/tags')
       return response.data.data || response.data || []
     } catch (error) {
       console.error('💥 getTags failed:', error)
@@ -343,7 +336,7 @@ class TaskService {
    */
   async testConnection(): Promise<boolean> {
     try {
-      await this.api.get('/health')
+      await this.api.get('api/health')
       return true
     } catch (error) {
       return false

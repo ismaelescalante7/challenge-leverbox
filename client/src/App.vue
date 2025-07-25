@@ -64,6 +64,13 @@
                 :class="{ 'animate-spin': tasksStore.isLoading }"
               />
             </button>
+            <button
+              v-if="isAuthenticated"
+              @click="logout"
+              class="p-2 text-red-500 hover:text-red-700 text-sm font-medium transition-colors"
+            >
+              Cerrar sesión
+            </button>
           </div>
         </div>
       </div>
@@ -112,7 +119,9 @@ import {
 import { useTasksStore } from '@/stores/useTasksStore'
 import { useNotifications } from '@/composables/useNotifications'
 import AppLoading from '@/components/AppLoading.vue'
+import { useAuth } from '@/composables/useAuth'
 
+const { logout, isAuthenticated } = useAuth()
 const tasksStore = useTasksStore()
 const { showError, showSuccess } = useNotifications()
 
