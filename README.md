@@ -152,17 +152,6 @@ GET    /api/tasks/search        # Search tasks
 GET    /api/priorities          # List priorities
 GET    /api/tags               # List tags
 ```
-## Testing
-
-### Backend Testing
-```bash
-docker exec -it api php artisan test
-```
-
-### Frontend Testing  
-```bash
-docker exec -it client npm run test
-```
 
 ## Roadmap
 - [x] Laravel, Sanctum, and Fortify installations
