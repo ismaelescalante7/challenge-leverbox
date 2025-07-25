@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { taskService, taskHelpers } from '@/services/taskService'
-import type { AxiosError } from 'axios'
 import type { 
   Task, 
   CreateTaskDto, 
@@ -16,10 +15,6 @@ import type {
 } from '@/types/task'
 
 // Types para manejo de errores
-interface ValidationError {
-  message: string
-  errors: Record<string, string[]>
-}
 
 interface ApiErrorResponse {
   message: string
@@ -79,17 +74,11 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // 🔍 ERROR HANDLING HELPER CON MEJOR DEBUG
   const parseError = (err: any): StoreError => {
-    console.log('🔍 Store parseError - Input error:', err)
-    console.log('🔍 Store parseError - Is AxiosError:', err?.isAxiosError)
-    console.log('🔍 Store parseError - Has response:', !!err?.response)
     
     // Si es un AxiosError con respuesta del servidor
     if (err?.isAxiosError && err.response) {
       const response = err.response
       const data: ApiErrorResponse = response.data || {}
-      
-      console.log('🔍 Store parseError - Response status:', response.status)
-      console.log('🔍 Store parseError - Response data:', data)
       
       // Error de validación (422)
       if (response.status === 422 || data.validation_failed || data.error_type === 'validation') {
@@ -100,7 +89,6 @@ export const useTasksStore = defineStore('tasks', () => {
           statusCode: response.status
         }
         
-        console.log('🔍 Store parseError - Parsed validation error:', parsed)
         return parsed
       }
       
@@ -112,7 +100,6 @@ export const useTasksStore = defineStore('tasks', () => {
           statusCode: response.status
         }
         
-        console.log('🔍 Store parseError - Parsed server error:', parsed)
         return parsed
       }
       
@@ -123,7 +110,6 @@ export const useTasksStore = defineStore('tasks', () => {
         statusCode: response.status
       }
       
-      console.log('🔍 Store parseError - Parsed other server error:', parsed)
       return parsed
     }
     
@@ -134,7 +120,6 @@ export const useTasksStore = defineStore('tasks', () => {
         type: 'network' as const
       }
       
-      console.log('🔍 Store parseError - Parsed timeout error:', parsed)
       return parsed
     }
     
@@ -144,7 +129,6 @@ export const useTasksStore = defineStore('tasks', () => {
         type: 'network' as const
       }
       
-      console.log('🔍 Store parseError - Parsed network error:', parsed)
       return parsed
     }
     
@@ -154,7 +138,6 @@ export const useTasksStore = defineStore('tasks', () => {
       type: 'unknown' as const
     }
     
-    console.log('🔍 Store parseError - Parsed generic error:', parsed)
     return parsed
   }
 
@@ -193,13 +176,10 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // Actions para Tasks
   const fetchTasks = async (page?: number): Promise<void> => {
-    console.log('🔍 Store fetchTasks called with page:', page)
-    console.log('🔍 Store current filters state:', filters.value)
     loading.value = true
     error.value = null
     
     try {
-      // ✅ CREAR FILTROS COMPLETOS basados en el estado actual
       const cleanFilters: Record<string, any> = {
         // Paginación y orden
         page: page || filters.value.page || 1,
@@ -208,7 +188,6 @@ export const useTasksStore = defineStore('tasks', () => {
         sort_direction: filters.value.sort_direction || 'desc'
       }
       
-      // ✅ AGREGAR FILTROS OPCIONALES si tienen valor
       if (filters.value.search && filters.value.search.trim()) {
         cleanFilters.search = filters.value.search.trim()
       }
@@ -229,22 +208,12 @@ export const useTasksStore = defineStore('tasks', () => {
         cleanFilters.overdue = true
       }
       
-      // ✅ LOG para debug
-      console.log('🔍 Store fetchTasks - Complete filters being sent:', cleanFilters)
-      console.log('🔍 Store fetchTasks - Comparison:')
-      console.log('   - Original filters.value:', filters.value)
-      console.log('   - Clean filters to API:', cleanFilters)
-      
       const response: TasksApiResponse = await taskService.getTasks(cleanFilters)
-      console.log('🔍 Store fetchTasks - Response:', response)
       
       // Actualizar state con nueva estructura
       tasks.value = response.data || []
       pagination.value = response.pagination || pagination.value
       availableFilters.value = response.filters || null
-      
-      console.log('🔍 Store fetchTasks - Updated tasks:', tasks.value.length)
-      
     } catch (err: any) {
       console.error('💥 Store fetchTasks failed:', err)
       error.value = parseError(err)
@@ -254,13 +223,11 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   const fetchTask = async (id: number): Promise<void> => {
-    console.log('🔍 Store fetchTask called with id:', id)
     loading.value = true
     error.value = null
     
     try {
       const task = await taskService.getTask(id)
-      console.log('🔍 Store fetchTask - Response:', task)
       currentTask.value = task
     } catch (err: any) {
       console.error('💥 Store fetchTask failed:', err)
@@ -273,25 +240,21 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // Update task status specifically
   const updateTaskStatus = async (id: number, status: TaskStatus): Promise<void> => {
-    console.log('🔍 Store updateTaskStatus called:', { id, status })
     loading.value = true
     error.value = null
     
     try {
       const updatedTask = await taskService.updateTaskStatus(id, status)
-      console.log('🔍 Store updateTaskStatus - Response:', updatedTask)
       
       // Actualizar en la lista
       const index = tasks.value.findIndex(t => t.id === id)
       if (index !== -1) {
         tasks.value[index] = updatedTask
-        console.log('🔍 Store updateTaskStatus - Updated task in list')
       }
       
       // Actualizar tarea actual si coincide
       if (currentTask.value?.id === id) {
         currentTask.value = updatedTask
-        console.log('🔍 Store updateTaskStatus - Updated current task')
       }
       
     } catch (err: any) {
@@ -305,12 +268,10 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // Actions para Priorities
   const fetchPriorities = async (): Promise<void> => {
-    console.log('🔍 Store fetchPriorities called')
     loadingPriorities.value = true
     
     try {
       const data = await taskService.getPriorities()
-      console.log('🔍 Store fetchPriorities - Response:', data)
       priorities.value = data
     } catch (err: any) {
       console.error('💥 Store fetchPriorities failed:', err)
@@ -328,7 +289,6 @@ export const useTasksStore = defineStore('tasks', () => {
     
     try {
       const data = await taskService.getTags()
-      console.log('🔍 Store fetchTags - Response:', data)
       tags.value = data
     } catch (err: any) {
       console.error('💥 Store fetchTags failed:', err)
@@ -346,17 +306,12 @@ export const useTasksStore = defineStore('tasks', () => {
     error.value = null
     
     try {
-      console.log('🔍 Store createTask - Calling taskService.createTask...')
       const newTask = await taskService.createTask(data)
-      console.log('🔍 Store createTask - Success! New task:', newTask)
       
       tasks.value.unshift(newTask)
-      console.log('🔍 Store createTask - Added to tasks list, total:', tasks.value.length)
       
       // Limpiar errores después de éxito
       error.value = null
-      console.log('🔍 Store createTask - Cleared error state')
-      
     } catch (err: any) {
       console.error('💥 Store createTask failed - Raw error:', err)
       const parsedError = parseError(err)
@@ -368,27 +323,22 @@ export const useTasksStore = defineStore('tasks', () => {
       throw parsedError
     } finally {
       loading.value = false
-      console.log('🔍 Store createTask - Loading set to false')
     }
   }
 
   const updateTask = async (id: number, data: UpdateTaskDto): Promise<void> => {
-    console.log('🔍 Store updateTask called:', { id, data })
     loading.value = true
     error.value = null
     
     try {
       const updatedTask = await taskService.updateTask(id, data)
-      console.log('🔍 Store updateTask - Success! Updated task:', updatedTask)
       
       const index = tasks.value.findIndex(t => t.id === id)
       if (index !== -1) {
         tasks.value[index] = updatedTask
-        console.log('🔍 Store updateTask - Updated task in list at index:', index)
       }
       if (currentTask.value?.id === id) {
         currentTask.value = updatedTask
-        console.log('🔍 Store updateTask - Updated current task')
       }
       
       // Limpiar errores después de éxito
@@ -414,14 +364,11 @@ export const useTasksStore = defineStore('tasks', () => {
     
     try {
       await taskService.deleteTask(id)
-      console.log('🔍 Store deleteTask - Success!')
       
       tasks.value = tasks.value.filter(t => t.id !== id)
-      console.log('🔍 Store deleteTask - Removed from list, total:', tasks.value.length)
       
       if (currentTask.value?.id === id) {
         currentTask.value = null
-        console.log('🔍 Store deleteTask - Cleared current task')
       }
       
       // Limpiar errores después de éxito
@@ -440,13 +387,11 @@ export const useTasksStore = defineStore('tasks', () => {
 
   // Filter actions
   const updateFilters = (newFilters: Partial<TaskFilters>): void => {
-    console.log('🔍 Store updateFilters called:', newFilters)
     Object.assign(filters.value, newFilters)
     fetchTasks()
   }
 
   const clearFilters = (): void => {
-    console.log('🔍 Store clearFilters called')
     filters.value = {
       status: '',
       priority_id: '',
@@ -462,10 +407,7 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   const clearError = (): void => {
-    console.log('🔍 Store clearError called')
-    console.log('🔍 Store clearError - Previous error:', error.value)
     error.value = null
-    console.log('🔍 Store clearError - Error cleared')
   }
 
   // Método para obtener errores de un campo específico

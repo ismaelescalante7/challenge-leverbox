@@ -141,9 +141,6 @@ import {
   ClockIcon,
   CheckCircleIcon,
   PlusIcon,
-  ExclamationTriangleIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
   PlayIcon
 } from '@heroicons/vue/24/outline'
 
@@ -185,7 +182,6 @@ const showCreateModal = ref(false)
 const modalLoading = ref(false)
 const actionLoading = ref(false)
 
-// 🎯 COMPUTED CORREGIDOS para funcionar con datos reales
 const totalTasks = computed(() => {
   console.log('🔍 Dashboard totalTasks computed - taskStats:', taskStats.value)
   return taskStats.value?.total || tasks.value.length || 0
@@ -213,7 +209,6 @@ const recentlyCompleted = computed(() => {
   
   const completed = tasksByStatus.value.completed
     .filter(task => {
-      // ✅ Usar task.dates.updated_at (estructura real)
       if (!task.dates?.updated_at) return false
       const updatedDate = new Date(task.dates.updated_at)
       const isRecent = updatedDate >= sevenDaysAgo
@@ -226,7 +221,7 @@ const recentlyCompleted = computed(() => {
   return completed
 })
 
-// Trends (mock data - replace with real calculation)
+
 const totalTasksTrend = computed(() => ({
   value: 12,
   unit: '%',
@@ -258,34 +253,20 @@ const primaryActions = computed(() => [
   }
 ])
 
-// Methods
-const retryLoad = async (): Promise<void> => {
-  console.log('🔍 Dashboard retrying load...')
-  try {
-    tasksStore.clearError()
-    await tasksStore.refreshAll()
-    showSuccess('Dashboard refreshed successfully!')
-  } catch (error) {
-    console.error('💥 Dashboard retry failed:', error)
-  }
-}
 
 const openCreateModal = (): void => {
-  console.log('🔍 Dashboard opening create modal')
   showCreateModal.value = true
   tasksStore.clearError()
 }
 
 const closeCreateModal = (): void => {
-  console.log('🔍 Dashboard closing create modal')
   showCreateModal.value = false
   modalLoading.value = false
   tasksStore.clearError()
 }
 
-// 🎯 CREATE TASK CON GESTIÓN DE ERRORES
+
 const createTask = async (taskData: CreateTaskDto): Promise<void> => {
-  console.log('🔍 Dashboard createTask called with:', taskData)
   modalLoading.value = true
   
   try {
@@ -327,9 +308,6 @@ const markAsCompleted = async (taskId: number): Promise<void> => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('🔍 Dashboard mounted')
-  console.log('🔍 Dashboard - initialized:', initialized.value)
-  console.log('🔍 Dashboard - total tasks:', totalTasks.value)
   
   // Solo inicializar si no está inicializado
   if (!initialized.value) {

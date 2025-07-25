@@ -164,7 +164,6 @@ GET    /api/tags               # List tags
 - [x] Dashboard with statistics
 - [x] Advanced filters and search
 - [x] Authentication with route guards
-- [x] Responsive design
 
 ## Contributing
 Contributions are **welcome** and will be fully **credited**.

@@ -134,9 +134,7 @@ const initializeApp = async (): Promise<void> => {
   try {
     await tasksStore.initialize()
     updateLastRefresh()
-    console.log('✅ App initialized successfully')
   } catch (error: any) {
-    console.error('💥 App initialization failed:', error)
     initError.value = error.message || 'Failed to load application data'
   }
 }

@@ -76,10 +76,10 @@
 </template>
 
 <script setup lang="ts">
+import '@/assets/styles/tasks-view.css'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 // Components
 import TasksHeader from '@/components/tasks/TasksHeader.vue'
@@ -388,128 +388,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* Debug panel */
-.debug-panel {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  font-family: monospace;
-  font-size: 0.875rem;
-}
-
-.debug-panel h4 {
-  margin: 0 0 0.5rem 0;
-  color: #374151;
-}
-
-.debug-panel p {
-  margin: 0.25rem 0;
-  color: #6b7280;
-}
-
-.debug-panel details {
-  margin-top: 0.5rem;
-}
-
-.debug-panel pre {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.25rem;
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  overflow-x: auto;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.btn-debug {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-/* Error Alert */
-.error-alert {
-  border-radius: 0.5rem;
-}
-
-.error-content {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  display: flex;
-  align-items: flex-start;
-}
-
-.error-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: #ef4444;
-  margin-right: 0.75rem;
-  margin-top: 0.125rem;
-  flex-shrink: 0;
-}
-
-.error-text {
-  flex: 1;
-}
-
-.error-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #991b1b;
-  margin: 0 0 0.25rem 0;
-}
-
-.error-message {
-  font-size: 0.875rem;
-  color: #7f1d1d;
-  margin: 0;
-}
-
-.error-actions {
-  margin-top: 0.5rem;
-}
-
-.retry-btn {
-  font-size: 0.875rem;
-  background-color: #fecaca;
-  color: #991b1b;
-  border: none;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
-}
-
-.retry-btn:hover:not(:disabled) {
-  background-color: #fca5a5;
-}
-
-.retry-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.error-close {
-  background: none;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  padding: 0.25rem;
-  margin-left: 0.75rem;
-  transition: color 0.15s ease-in-out;
-}
-
-.error-close:hover {
-  color: #dc2626;
-}
-</style>

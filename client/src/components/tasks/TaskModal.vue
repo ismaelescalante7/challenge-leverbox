@@ -220,13 +220,13 @@ interface Props {
   priorities: Priority[]
   tags: Tag[]
   loading?: boolean
-  error?: StoreError | null  // 🎯 NUEVA PROP PARA EL ERROR
+  error?: StoreError | null 
 }
 
 interface Emits {
   (e: 'close'): void
   (e: 'save', data: CreateTaskDto | UpdateTaskDto): void
-  (e: 'clear-error'): void  // 🎯 NUEVO EMIT PARA LIMPIAR ERROR
+  (e: 'clear-error'): void 
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -239,7 +239,6 @@ const emit = defineEmits<Emits>()
 
 // 🔍 DEBUG: Log props changes
 watch(() => props.error, (newError) => {
-  console.log('🔍 TaskModal received error update:', newError)
 }, { immediate: true })
 
 // Composables
@@ -269,18 +268,12 @@ const isFormValid = computed(() => {
 })
 
 const globalError = computed(() => {
-  console.log('🔍 TaskModal globalError computed:', props.error)
   return props.error
 })
 
-// ✅ NUEVO: Solo mostrar errores de validación EN EL MODAL
-const showModalError = computed(() => {
-  return globalError.value?.type !== 'validation'
-})
 
 const validationErrors = computed(() => {
   const errors = globalError.value?.validationErrors || {}
-  console.log('🔍 TaskModal validationErrors computed:', errors)
   return errors
 })
 
@@ -312,34 +305,28 @@ const hasAnyErrors = computed(() => {
 const getError = (field: string): string | null => {
   // Priorizar errores locales sobre errores del servidor
   if (localErrors.value[field]) {
-    console.log(`🔍 TaskModal getError(${field}) - local:`, localErrors.value[field])
     return localErrors.value[field]
   }
   
   // Luego errores de validación del servidor
   const serverErrors = validationErrors.value[field]
   if (serverErrors && serverErrors.length > 0) {
-    console.log(`🔍 TaskModal getError(${field}) - server:`, serverErrors[0])
     return serverErrors[0]
   }
   
-  console.log(`🔍 TaskModal getError(${field}) - no error`)
   return null
 }
 
 const hasError = (field: string): boolean => {
   const hasErr = !!getError(field)
-  console.log(`🔍 TaskModal hasError(${field}):`, hasErr)
   return hasErr
 }
 
 const clearFieldError = (field: string): void => {
-  console.log(`🔍 TaskModal clearing field error: ${field}`)
   delete localErrors.value[field]
   
   // Si hay errores de validación del servidor, limpiar todo
   if (globalError.value?.type === 'validation') {
-    console.log('🔍 TaskModal clearing global validation error')
     emit('clear-error')
   }
 }
@@ -355,7 +342,6 @@ const formatFieldName = (field: string): string => {
 
 // Methods
 const resetForm = (): void => {
-  console.log('🔍 TaskModal resetting form, task:', props.task)
   
   if (props.task) {
     form.value = {
@@ -363,7 +349,7 @@ const resetForm = (): void => {
       description: props.task.description || '',
       status: taskHelpers.getStatusValue(props.task) as any,
       priority_id: props.task.priority?.id || null,
-      due_date: props.task.due_date ? formatDateForInput(props.task.due_date) : '',
+      due_date: props.task.dates.due_date ? formatDateForInput(props.task.dates.due_date) : '',
       tag_ids: props.task.tags?.map(tag => tag.id) || []
     }
   } else {
@@ -380,11 +366,10 @@ const resetForm = (): void => {
   
   // Clear local errors
   clearAllErrors()
-  console.log('🔍 TaskModal form reset to:', form.value)
 }
 
 const validateForm = (): boolean => {
-  console.log('🔍 TaskModal validating form...')
+
   clearAllErrors()
   let isValid = true
   
@@ -406,15 +391,13 @@ const validateForm = (): boolean => {
     isValid = false
   }
   
-  console.log('🔍 TaskModal local validation result:', isValid, localErrors.value)
+
   return isValid
 }
 
 const handleSave = (): void => {
-  console.log('🔍 TaskModal handleSave called')
   
   if (!validateForm()) {
-    console.log('🔍 TaskModal local validation failed')
     // Focus on first error field
     const firstErrorField = Object.keys(localErrors.value)[0]
     if (firstErrorField === 'title' && titleInput.value) {
@@ -432,12 +415,10 @@ const handleSave = (): void => {
     tag_ids: form.value.tag_ids.length > 0 ? form.value.tag_ids : undefined
   }
   
-  console.log('🔍 TaskModal emitting save with data:', data)
   emit('save', data)
 }
 
 const handleClose = (): void => {
-  console.log('🔍 TaskModal handleClose called')
   clearAllErrors()
   emit('clear-error')
   emit('close')
@@ -448,7 +429,6 @@ watch(() => props.task, resetForm, { immediate: true })
 
 // Limpiar errores locales cuando cambian los errores del store
 watch(() => props.error, (newError) => {
-  console.log('🔍 TaskModal error prop changed, clearing local errors')
   if (!newError) {
     clearAllErrors()
   }

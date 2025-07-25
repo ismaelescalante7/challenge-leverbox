@@ -200,7 +200,6 @@ const { getStatusCardClasses } = useStatusColors()
 const showAll = ref(false)
 
 const displayTasks = computed(() => {
-  console.log(`🔍 TaskList(${props.title}) displayTasks - showing ${showAll.value ? props.tasks.length : Math.min(props.limit, props.tasks.length)} of ${props.tasks.length} tasks`)
   return showAll.value ? props.tasks : props.tasks.slice(0, props.limit)
 })
 
@@ -215,7 +214,6 @@ const emptyIcon = computed(() => {
 })
 
 const toggleShowAll = (): void => {
-  console.log(`🔍 TaskList(${props.title}) toggleShowAll - showAll:`, !showAll.value)
   showAll.value = !showAll.value
 }
 
