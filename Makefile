@@ -11,4 +11,4 @@ api-bash:
 	docker-compose exec api bash
 
 client-bash:
-	docker-compose exec client bash
+	docker-compose exec client sh

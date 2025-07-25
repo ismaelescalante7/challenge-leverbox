@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test:unit": "vitest"
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
