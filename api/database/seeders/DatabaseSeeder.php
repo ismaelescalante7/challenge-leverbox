@@ -13,7 +13,11 @@ class DatabaseSeeder extends Seeder
 	 */
 	public function run(): void
 	{
-		$users = \App\Models\User::factory(1)->create();
+		$user = \App\Models\User::create([
+			'name' => 'user-leverbox',
+			'email' => 'test@leverbox.com',
+			'password' => 'password'
+		]);
 
 		$this->call([
             PrioritySeeder::class,
